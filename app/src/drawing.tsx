@@ -52,9 +52,9 @@ export function ShapesLayer(p: {
   shapes: Record<string, Shape>;
   ids: string[];
   zoom: number;
-  selected: string | null;
+  selected: string[];
   interactive: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, add?: boolean) => void;
   onChange: (id: string, patch: Partial<Shape>, done: boolean) => void;
   onContext: (id: string, e: { clientX: number; clientY: number }) => void;
 }) {
@@ -62,7 +62,8 @@ export function ShapesLayer(p: {
   const start = (id: string, mode: "move" | "resize") => (e: RPointerEvent) => {
     if (e.button !== 0 || !p.interactive) return;
     e.stopPropagation();
-    p.onSelect(id);
+    p.onSelect(id, e.shiftKey);
+    if (e.shiftKey) return;
     drag.current = { id, mode, sx: e.clientX, sy: e.clientY, o: p.shapes[id], moved: false };
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
   };
@@ -92,7 +93,7 @@ export function ShapesLayer(p: {
     <>
       {p.ids.map((id) => {
         const s = p.shapes[id];
-        const sel = p.selected === id;
+        const sel = p.selected.includes(id);
         return (
           <div
             key={id}
@@ -105,7 +106,7 @@ export function ShapesLayer(p: {
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              p.onSelect(id);
+              if (!p.selected.includes(id)) p.onSelect(id);
               p.onContext(id, e);
             }}
           >

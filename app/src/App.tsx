@@ -104,7 +104,10 @@ export function App() {
   const [leftTab, setLeftTab] = useState<"boards" | "assets" | "tokens">("boards");
   const [assetsVersion, setAssetsVersion] = useState(0);
   const [picker, setPicker] = useState<null | ((a: Asset) => void)>(null);
-  const [selectedShape, setSelectedShape] = useState<string | null>(null);
+  const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
+  /** Single selected shape (options panel); null when none or several */
+  const selectedShape = selectedShapes.length === 1 ? selectedShapes[0] : null;
+  const setSelectedShape = (id: string | null) => setSelectedShapes(id ? [id] : []);
   const [tokensVersion, setTokensVersion] = useState(0);
   const tokens = useTokens(tokensVersion);
   const [author, setAuthor] = useState<string>(() => {
@@ -510,8 +513,10 @@ export function App() {
   }, [firstRunHint]);
   const select = (files: string[], m: "replace" | "toggle" | "add" = "replace") => {
     setSelected((cur) => (m === "replace" ? files : m === "add" ? [...new Set([...cur, ...files])] : files.reduce((a, f) => (a.includes(f) ? a.filter((x) => x !== f) : [...a, f]), cur)));
-    if (files.length && m === "replace") setSelectedNotes([]);
-    setSelectedShape(null);
+    if (files.length && m === "replace") {
+      setSelectedNotes([]);
+      setSelectedShapes([]);
+    }
   };
   const pageField = () => (pages.length && currentPage ? { page: currentPage } : {});
 
@@ -628,12 +633,13 @@ export function App() {
       return { ...b, boards: { ...b.boards, [file]: it } };
     }, label);
   /** Shift the selected boards and notes together by (dx, dy) */
-  const shifted = (b: Board, dx: number, dy: number, files = selected, notes = selectedNotes): Board => ({
+  const shifted = (b: Board, dx: number, dy: number, files = selected, notes = selectedNotes, shapeIds = selectedShapes): Board => ({
     ...b,
     boards: { ...b.boards, ...Object.fromEntries(files.filter((f) => b.boards[f]).map((f) => [f, { ...b.boards[f], x: b.boards[f].x + dx, y: b.boards[f].y + dy, autoPlaced: undefined }])) },
     notes: { ...b.notes, ...Object.fromEntries(notes.filter((id) => b.notes[id]).map((id) => [id, { ...b.notes[id], x: b.notes[id].x + dx, y: b.notes[id].y + dy }])) },
+    shapes: { ...(b.shapes ?? {}), ...Object.fromEntries(shapeIds.filter((id) => b.shapes?.[id]).map((id) => [id, { ...b.shapes![id], x: b.shapes![id].x + dx, y: b.shapes![id].y + dy }])) },
   });
-  const nudge = (dx: number, dy: number) => update((b) => shifted(b, dx, dy), selected.length ? strings.history.moveBoard : strings.history.moveNote);
+  const nudge = (dx: number, dy: number) => update((b) => shifted(b, dx, dy), selected.length ? strings.history.moveBoard : selectedNotes.length ? strings.history.moveNote : strings.history.moveShape);
 
   /* ---------- Notes ---------- */
   const newNoteId = () => {
@@ -688,13 +694,14 @@ export function App() {
     return id;
   };
   const patchShape = (id: string, patch: Partial<Shape>, label?: string) => update((b) => ({ ...b, shapes: { ...(b.shapes ?? {}), [id]: { ...b.shapes![id], ...patch } } }), label);
-  const deleteShape = (id: string) => {
+  const deleteShapes = (ids: string[]) => {
     update((b) => {
-      const { [id]: _, ...rest } = b.shapes ?? {};
+      const rest = { ...(b.shapes ?? {}) };
+      for (const id of ids) delete rest[id];
       return { ...b, shapes: rest };
     }, strings.history.deleteShape);
-    setSelectedShape(null);
-    toast({ text: strings.toast.shapeDeleted, action: undoAction });
+    setSelectedShapes([]);
+    toast({ text: ids.length === 1 ? strings.toast.shapeDeleted : strings.toast.shapesDeleted(ids.length), action: undoAction });
   };
   const shapeZ = (id: string, to: "front" | "back") => {
     const zs = Object.values(boardRef.current?.shapes ?? {}).map((x) => x.z ?? 0);
@@ -764,6 +771,12 @@ export function App() {
   };
 
   /* ---------- Pages (server history) ---------- */
+  const renameGroup = async (key: string) => {
+    if (!board) return;
+    const r = await ask.prompt({ title: strings.dialog.renameGroupTitle, label: strings.dialog.name, value: board.groupNames?.[key] ?? key, ok: strings.dialog.save });
+    if (!r?.value.trim()) return;
+    update((b) => ({ ...b, groupNames: { ...(b.groupNames ?? {}), [key]: r.value.trim() } }), strings.history.renameGroup);
+  };
   const pageApi = async (body: Record<string, unknown>, okText?: string) => {
     try {
       const r = await api.post<{ id?: string }>("/api/pages", body);
@@ -952,10 +965,22 @@ export function App() {
   const stopInlineRef = useRef(() => {});
   stopInlineRef.current = stopInline;
   /** ⌘\: hide or show both panels together */
-  const [rightOpen, setRightOpen] = useState(true);
+  const [rightOpen, setRightOpen] = useState(() => !window.matchMedia("(max-width: 1000px)").matches);
+  const settledRef = useRef(false);
   useEffect(() => {
-    if (narrow) setRightOpen(true);
+    const t = setTimeout(() => (settledRef.current = true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+  // Narrow windows: the right drawer opens when the user picks something (not on restore), and only one drawer is open at a time
+  useEffect(() => {
+    if (narrow && settledRef.current) setRightOpen(true);
   }, [narrow, selected, editFile, rightTab]);
+  useEffect(() => {
+    if (narrow && leftOpen) setRightOpen(false);
+  }, [narrow, leftOpen]);
+  useEffect(() => {
+    if (narrow && rightOpen) setLeftOpen(false);
+  }, [narrow, rightOpen]);
   const toggleUi = () => {
     const hide = leftOpen || rightOpen;
     setLeftOpen(!hide);
@@ -1167,7 +1192,7 @@ export function App() {
       return;
     }
     if (k === "p" && !editFile && !cmd && selected.length === 1 && board.boards[selected[0]]?.is_interactive) return run(() => (inlinePlay === selected[0] ? stopInline() : setInlinePlay(selected[0])));
-    if ((e.key === "Delete" || e.key === "Backspace") && selectedShape && !editFile) return run(() => deleteShape(selectedShape));
+    if ((e.key === "Delete" || e.key === "Backspace") && selectedShapes.length && !editFile) return run(() => deleteShapes(selectedShapes));
     if (e.key === "Delete" || e.key === "Backspace") {
       if (editFile && edit.state.selection) {
         const sel = edit.state.selection;
@@ -1209,13 +1234,7 @@ export function App() {
       }
       return run(() => {});
     }
-    if (e.key.startsWith("Arrow") && !editFile && selectedShape) {
-      const d = e.altKey ? 100 : e.shiftKey ? 10 : 1;
-      const dx = e.key === "ArrowLeft" ? -d : e.key === "ArrowRight" ? d : 0;
-      const dy = e.key === "ArrowUp" ? -d : e.key === "ArrowDown" ? d : 0;
-      return run(() => patchShape(selectedShape, { x: shapes[selectedShape].x + dx, y: shapes[selectedShape].y + dy }, strings.history.moveShape));
-    }
-    if (e.key.startsWith("Arrow") && (selected.length || selectedNotes.length) && !editFile) {
+    if (e.key.startsWith("Arrow") && (selected.length || selectedNotes.length || selectedShapes.length) && !editFile) {
       const d = e.altKey ? 100 : e.shiftKey ? 10 : 1;
       return run(() => nudge(e.key === "ArrowLeft" ? -d : e.key === "ArrowRight" ? d : 0, e.key === "ArrowUp" ? -d : e.key === "ArrowDown" ? d : 0));
     }
@@ -1472,6 +1491,7 @@ export function App() {
               if (!add) goTo([f]);
               if (narrow && !add) setLeftOpen(false);
             }}
+            onGroupRename={(key) => void renameGroup(key)}
             onGroupMenu={(key, files, at) =>
               setMenu({
                 x: at.clientX,
@@ -1482,11 +1502,7 @@ export function App() {
                     ? [{
                         label: strings.menu.renameGroup,
                         icon: "title" as IconName,
-                        run: async () => {
-                          const r = await ask.prompt({ title: strings.dialog.renameGroupTitle, label: strings.dialog.name, value: board.groupNames?.[key] ?? key, ok: strings.dialog.save });
-                          if (!r?.value.trim()) return;
-                          update((b) => ({ ...b, groupNames: { ...(b.groupNames ?? {}), [key]: r.value.trim() } }), strings.history.renameGroup);
-                        },
+                        run: () => void renameGroup(key),
                       }]
                     : []),
                   {
@@ -1542,13 +1558,15 @@ export function App() {
             onSelectNote={(id, add) => {
               if (!id) return setSelectedNotes([]);
               setSelectedNotes((cur) => (add ? (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]) : [id]));
-              if (!add) setSelected([]);
-              setSelectedShape(null);
+              if (!add) {
+                setSelected([]);
+                setSelectedShapes([]);
+              }
             }}
             onMarquee={(hit, additive) => {
               setSelected((cur) => (additive ? [...new Set([...cur, ...hit.boards])] : hit.boards));
               setSelectedNotes((cur) => (additive ? [...new Set([...cur, ...hit.notes])] : hit.notes));
-              setSelectedShape(null);
+              setSelectedShapes((cur) => (additive ? [...new Set([...cur, ...hit.shapes])] : hit.shapes));
             }}
             onMoveBoards={(patches, done) =>
               update(
@@ -1594,14 +1612,27 @@ export function App() {
                 shapes={shapes}
                 ids={visibleShapes}
                 zoom={view.zoom}
-                selected={selectedShape}
+                selected={selectedShapes}
                 interactive={tool === "select" && !editFile}
-                onSelect={(id) => {
-                  setSelectedShape(id);
-                  setSelected([]);
-                  setSelectedNote(null);
+                onSelect={(id, add) => {
+                  setSelectedShapes((cur) => (add ? (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]) : cur.includes(id) ? cur : [id]));
+                  if (!add) {
+                    setSelected([]);
+                    setSelectedNotes([]);
+                  }
                 }}
-                onChange={(id, patch, done) => patchShape(id, patch, done ? (patch.w != null ? strings.history.resizeShape : strings.history.moveShape) : undefined)}
+                onChange={(id, patch, done) =>
+                  update((b) => {
+                    const cur = b.shapes?.[id];
+                    if (!cur) return b;
+                    // Dragging one selected shape moves the rest of the selection along
+                    const dx = patch.x != null ? patch.x - cur.x : 0;
+                    const dy = patch.y != null ? patch.y - cur.y : 0;
+                    const inGroup = (dx || dy) && patch.w == null && selectedShapes.includes(id);
+                    const base = inGroup ? shifted(b, dx, dy, selected, selectedNotes, selectedShapes.filter((k) => k !== id)) : b;
+                    return { ...base, shapes: { ...(base.shapes ?? {}), [id]: { ...cur, ...patch } } };
+                  }, done ? (patch.w != null ? strings.history.resizeShape : strings.history.moveShape) : undefined)
+                }
                 onContext={(id, at) =>
                   setMenu({
                     x: at.clientX,
@@ -1611,7 +1642,7 @@ export function App() {
                       { label: strings.menu.front, icon: "front", shortcut: `${mod}]`, run: () => shapeZ(id, "front") },
                       { label: strings.menu.back, icon: "back", shortcut: `${mod}[`, run: () => shapeZ(id, "back") },
                       "sep",
-                      { label: strings.menu.delete, icon: "trash", shortcut: "⌫", danger: true, run: () => deleteShape(id) },
+                      { label: strings.menu.delete, icon: "trash", shortcut: "⌫", danger: true, run: () => deleteShapes([id]) },
                     ],
                   })
                 }
@@ -1702,7 +1733,7 @@ export function App() {
           onSelectPath={(p) => editFile && void edit.select([p])}
         >
           {!editFile && selectedShape && shapes[selectedShape] && (
-            <ShapeOptions shape={shapes[selectedShape]} onPatch={(pt) => patchShape(selectedShape, pt, strings.history.shapeStyle)} onDelete={() => deleteShape(selectedShape)} onFront={() => shapeZ(selectedShape, "front")} onBack={() => shapeZ(selectedShape, "back")} />
+            <ShapeOptions shape={shapes[selectedShape]} onPatch={(pt) => patchShape(selectedShape, pt, strings.history.shapeStyle)} onDelete={() => deleteShapes([selectedShape])} onFront={() => shapeZ(selectedShape, "front")} onBack={() => shapeZ(selectedShape, "back")} />
           )}
           {!editFile && selectedNote && board.notes[selectedNote] && (
             <NoteOptions
@@ -1767,6 +1798,16 @@ export function App() {
               onChange={(g: LayoutGuide[], label) => update((b) => ({ ...b, guides: { ...(b.guides ?? {}), [one]: g } }), label)}
             />
             </Collapsible>
+          )}
+          {!editFile && selectedShapes.length > 1 && (
+            <section className="board-opts">
+              <div className="sec-head">
+                <span>{strings.shapes.selectedN(selectedShapes.length)}</span>
+              </div>
+              <div className="btn-row">
+                <button className="icon-btn danger" aria-label={strings.shapes.deleteAll} title={strings.shapes.deleteAll} onClick={() => deleteShapes(selectedShapes)}><Icon name="trash" /></button>
+              </div>
+            </section>
           )}
           {!editFile && selectedNotes.length > 1 && (
             <section className="board-opts">

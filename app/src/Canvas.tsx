@@ -37,7 +37,7 @@ type Props = {
   onSelect: (files: string[], mode: "replace" | "toggle" | "add") => void;
   onSelectNote: (id: string | null, add?: boolean) => void;
   /** Marquee result: boards and notes inside the rectangle (additive with Shift) */
-  onMarquee: (hit: { boards: string[]; notes: string[] }, additive: boolean) => void;
+  onMarquee: (hit: { boards: string[]; notes: string[]; shapes: string[] }, additive: boolean) => void;
   onMoveBoards: (patches: Record<string, Partial<BoardItem>>, done: boolean) => void;
   onMoveNote: (id: string, patch: Partial<Note>, done: boolean) => void;
   onDeleteNote: (id: string) => void;
@@ -183,7 +183,8 @@ export function Canvas(p: Props) {
       const c = toWorld(b.right, b.bottom);
       return intersects({ x: a.x, y: a.y, w: c.x - a.x, h: c.y - a.y }, r);
     });
-    p.onMarquee({ boards, notes }, g.additive);
+    const shapes = Object.entries(p.board.shapes ?? {}).filter(([, s]) => intersects({ x: s.x, y: s.y, w: Math.max(1, s.w), h: Math.max(1, s.h) }, r)).map(([id]) => id);
+    p.onMarquee({ boards, notes, shapes }, g.additive);
   };
 
   /* ---------- Move selected boards together + snapping ---------- */
@@ -574,6 +575,8 @@ function NoteView(props: { id: string; note: Note; zoom: number; selected: boole
       ? { left: n.x, top: n.y, maxWidth: n.maxW ?? 4000, maxHeight: n.maxH || undefined }
       : { left: n.x, top: n.y, width: n.w ?? 320, height: n.h || undefined, background: stickyBg(n.color) };
   const textStyle = { fontSize: fs, fontWeight: n.bold ?? n.kind === "title" ? 700 : 400, fontStyle: n.italic ? "italic" : undefined };
+  // Zoomed far out, a title stays readable: it never drops below ~12px on screen
+  if (n.kind === "title" && fs * props.zoom < 12) Object.assign(style, { transform: `scale(${12 / (fs * props.zoom)})`, transformOrigin: "0 0" });
   return (
     <div
       className={`note note-${n.kind} ${props.selected ? "selected" : ""}`}

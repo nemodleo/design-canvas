@@ -25,6 +25,7 @@ export const LeftPanel = forwardRef<HTMLInputElement, {
   onBoardMenu: (file: string, e: { clientX: number; clientY: number }) => void;
   header?: React.ReactNode;
   onGroupMenu?: (key: string, files: string[], e: { clientX: number; clientY: number }) => void;
+  onGroupRename?: (key: string) => void;
 }>(function LeftPanel(p, searchRef) {
   const [q, setQ] = useState("");
   const [dragPage, setDragPage] = useState<string | null>(null);
@@ -154,11 +155,16 @@ export const LeftPanel = forwardRef<HTMLInputElement, {
               const open = !closed[g.key] || g.files.some((f) => p.selected.includes(f));
               return (
                 <li key={g.key} className={`group ${open ? "open" : ""}`}>
-                  <button className="row group-head" aria-expanded={open} title={strings.boardList.groupTitle(g.files.length)} onClick={() => toggleGroup(g.key)} onContextMenu={(e) => { if (!p.onGroupMenu) return; e.preventDefault(); p.onGroupMenu(g.key, g.files, e); }}>
+                  <div className="row group-head" role="button" tabIndex={0} aria-expanded={open} title={strings.boardList.groupTitle(g.files.length)} onClick={() => toggleGroup(g.key)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleGroup(g.key); } }} onDoubleClick={() => g.key && p.onGroupRename?.(g.key)} onContextMenu={(e) => { if (!p.onGroupMenu) return; e.preventDefault(); p.onGroupMenu(g.key, g.files, e); }}>
                     <Icon name="chevronRight" size={14} className="chev" />
                     <span className="row-text">{(g.key && p.board.groupNames?.[g.key]) || g.label}</span>
                     <span className="row-count">{g.files.length}</span>
-                  </button>
+                    {p.onGroupMenu && (
+                      <button className="icon-btn sm group-more" aria-label={strings.boardList.groupMenu} title={strings.boardList.groupMenu} onClick={(e) => { e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); p.onGroupMenu!(g.key, g.files, { clientX: r.left, clientY: r.bottom + 4 }); }}>
+                        <Icon name="more" size={14} />
+                      </button>
+                    )}
+                  </div>
                   {open && <ul>{g.files.map(row)}</ul>}
                 </li>
               );

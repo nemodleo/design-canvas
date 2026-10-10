@@ -131,7 +131,8 @@ export const strings = {
     fileMissing: "File missing",
     otherGroup: "Other",
     mainPage: "Main",
-    groupTitle: (n: number) => `${plural(n, "board", "boards")} · click to collapse or expand`,
+    groupTitle: (n: number) => `${plural(n, "board", "boards")} · click to collapse or expand · double-click to rename`,
+    groupMenu: "Group menu",
   },
 
   minimap: {
@@ -288,6 +289,8 @@ export const strings = {
   },
 
   shapes: {
+    selectedN: (n: number) => `${n} shapes selected`,
+    deleteAll: "Delete selected shapes",
     stickyColors: {
       yellow: "Yellow",
       orange: "Orange",
@@ -415,6 +418,7 @@ export const strings = {
     notesMax: (n: number) => `You can have up to ${n} notes`,
     noteDeleted: "Note deleted",
     shapeDeleted: "Shape deleted",
+    shapesDeleted: (n: number) => `Deleted ${plural(n, "shape", "shapes")}`,
     imageReadFailed: "Couldn't read the image",
     importOnly: (name: string) => `${name}: only HTML or images can be imported`,
     imported: (n: number) => `Imported ${plural(n, "board", "boards")}`,

@@ -119,7 +119,7 @@ kbd {
 .warn { color: var(--warn); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
 .editing-chip {
   display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 12px; border-radius: 16px;
-  background: var(--accent-weak); color: var(--accent); font-weight: 600; white-space: nowrap;
+  background: var(--select-weak); color: var(--select); font-weight: 600; white-space: nowrap;
 }
 .editing-chip .icon-btn { color: var(--select); }
 
@@ -212,6 +212,8 @@ kbd {
 .left .group-head { height: 28px; margin-top: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .left .group-head:hover { background: var(--hover); }
 .left .group-head .chev { transition: transform 120ms; flex: none; }
+.left .group-more { opacity: 0; flex: none; }
+.left .group-head:hover .group-more, .left .group-more:focus-visible { opacity: 1; }
 .left .group.open .group-head .chev { transform: rotate(90deg); }
 .warn-icon { color: var(--warn); flex: none; }
 .search { display: flex; align-items: center; gap: 8px; margin: 0 8px 8px; padding: 0 8px; height: 32px; border: 1px solid var(--line); border-radius: var(--r); color: var(--muted); background: var(--panel-2); }
@@ -291,6 +293,7 @@ button.link:hover:not(:disabled) { background: none; text-decoration: underline;
 .field-row { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; color: var(--muted); }
 .btn-row { display: flex; gap: 4px; }
 .btn-row .icon-btn { border-color: var(--line); }
+.board-opts .btn-row .icon-btn.danger { margin-left: auto; }
 
 .props .field { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 4px 8px; }
 .props .field span:first-child { color: var(--muted); }
@@ -396,7 +399,10 @@ button.danger { color: var(--warn); }
 
 /* Chat */
 .chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.chat-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex: none; }
+.chat-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); flex: none; min-width: 0; overflow: hidden; }
+.chat-head .agent-pick { min-width: 0; flex: 0 1 auto; }
+.chat-head .agent-pick select { max-width: 160px; }
+.chat-head .new-chat { flex: none; }
 .agent-pick select { height: 32px; font-weight: 600; }
 .chat-list { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 16px; }
 .chat-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; color: var(--muted); padding: 24px 8px; word-break: keep-all; }
@@ -549,3 +555,5 @@ button.danger { color: var(--warn); }
 .first-run { animation: hint-in 200ms ease-out; }
 .first-run-line { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
 .first-run-line svg { color: var(--accent); }
+/* Narrow windows: the first-run hint sits under the drawers */
+@media (max-width: 1000px) { .first-run { z-index: 15; } }
