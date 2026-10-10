@@ -72,6 +72,14 @@ export function App() {
   const [announce, setAnnounce] = useState("");
   const [focusFile, setFocusFile] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(true);
+  /** Narrow window (under 1000px): the side panels become drawers over the canvas */
+  const [narrow, setNarrow] = useState(() => window.matchMedia("(max-width: 1000px)").matches);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1000px)");
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
   const [minimapOpen, setMinimapOpen] = useState(true);
   const [menu, setMenu] = useState<MenuState>(null);
   const [hist, setHist] = useState({ canUndo: false, canRedo: false, undo: [] as string[], redo: [] as string[] });
@@ -395,8 +403,8 @@ export function App() {
     if (restored.current || !board || !canvasSize) return;
     restored.current = true;
     const s = loadSaved(board.title);
-    if (s.left != null) setLeftOpen(s.left);
-    else if (window.innerWidth < 1000) setLeftOpen(false);
+    if (window.innerWidth < 1000) setLeftOpen(false);
+    else if (s.left != null) setLeftOpen(s.left);
     if (s.minimap != null) setMinimapOpen(s.minimap);
     const launch = board.launch;
     if (launch?.page) setPage(launch.page);
@@ -934,6 +942,9 @@ export function App() {
   stopInlineRef.current = stopInline;
   /** ⌘\: hide or show both panels together */
   const [rightOpen, setRightOpen] = useState(true);
+  useEffect(() => {
+    if (narrow) setRightOpen(true);
+  }, [narrow, selected, editFile, rightTab]);
   const toggleUi = () => {
     const hide = leftOpen || rightOpen;
     setLeftOpen(!hide);
@@ -1431,6 +1442,7 @@ export function App() {
               if (pages.length && b && (b.page ?? pages[0].id) !== currentPage) setPage(b.page ?? pages[0].id);
               select([f], add ? "toggle" : "replace");
               if (!add) goTo([f]);
+              if (narrow && !add) setLeftOpen(false);
             }}
             onBoardMenu={(f, at) => {
               if (!selected.includes(f)) select([f]);
@@ -1548,6 +1560,7 @@ export function App() {
             <Minimap rects={rects} selected={selected} view={view} size={size} onJump={(x, y) => setView((v) => ({ ...v, x: size.w / 2 - x * v.zoom, y: size.h / 2 - y * v.zoom }))} />
           )}
         </div>
+        {narrow && leftOpen && <div className="drawer-backdrop" onPointerDown={() => setLeftOpen(false)} />}
         <div className="right" hidden={!rightOpen}>
           <div className="right-tabs" role="tablist" aria-label={strings.tabs.right}>
             <button role="tab" aria-selected={rightTab === "inspect"} className={rightTab === "inspect" ? "on" : ""} onClick={() => setRightTab("inspect")}>
@@ -1556,6 +1569,11 @@ export function App() {
             <button role="tab" aria-selected={rightTab === "chat"} className={rightTab === "chat" ? "on" : ""} onClick={() => openChat()}>
               {strings.tabs.ai} <kbd>{mod}J</kbd>
             </button>
+            {narrow && (
+              <button className="icon-btn sm right-close" aria-label={strings.tabs.closePanel} title={strings.tabs.closePanel} onClick={() => setRightOpen(false)}>
+                <Icon name="close" size={14} />
+              </button>
+            )}
           </div>
           <div className="chat-wrap" hidden={rightTab !== "chat"}>
             <ChatPanel

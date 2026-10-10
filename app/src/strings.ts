@@ -112,6 +112,7 @@ export const strings = {
     assets: "Assets",
     tokens: "Tokens",
     right: "Right panel",
+    closePanel: "Close panel",
     properties: "Properties",
     ai: "AI",
   },
