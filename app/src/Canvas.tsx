@@ -29,13 +29,15 @@ type Props = {
   visibleBoards: string[];
   visibleNotes: string[];
   selected: string[];
-  selectedNote: string | null;
+  selectedNotes: string[];
   editFile: string | null;
   /** Board playing in place (the iframe is interactive) */
   playing?: string | null;
   reloadKeys: Record<string, number>;
   onSelect: (files: string[], mode: "replace" | "toggle" | "add") => void;
-  onSelectNote: (id: string | null) => void;
+  onSelectNote: (id: string | null, add?: boolean) => void;
+  /** Marquee result: boards and notes inside the rectangle (additive with Shift) */
+  onMarquee: (hit: { boards: string[]; notes: string[] }, additive: boolean) => void;
   onMoveBoards: (patches: Record<string, Partial<BoardItem>>, done: boolean) => void;
   onMoveNote: (id: string, patch: Partial<Note>, done: boolean) => void;
   onDeleteNote: (id: string) => void;
@@ -171,8 +173,17 @@ export function Canvas(p: Props) {
       }
       return;
     }
-    const hit = p.visibleBoards.filter((f) => intersects(p.board.boards[f], r));
-    p.onSelect(hit, g.additive ? "add" : "replace");
+    const boards = p.visibleBoards.filter((f) => intersects(p.board.boards[f], r));
+    // Notes size themselves in the DOM, so measure them on screen and map back to world coordinates
+    const notes = p.visibleNotes.filter((id) => {
+      const el = rootRef.current?.querySelector(`[data-note="${id}"]`);
+      if (!el) return false;
+      const b = el.getBoundingClientRect();
+      const a = toWorld(b.left, b.top);
+      const c = toWorld(b.right, b.bottom);
+      return intersects({ x: a.x, y: a.y, w: c.x - a.x, h: c.y - a.y }, r);
+    });
+    p.onMarquee({ boards, notes }, g.additive);
   };
 
   /* ---------- Move selected boards together + snapping ---------- */
@@ -257,8 +268,9 @@ export function Canvas(p: Props) {
             key={id}
             note={p.board.notes[id]}
             zoom={view.zoom}
-            selected={p.selectedNote === id}
-            onSelect={() => p.onSelectNote(id)}
+            id={id}
+            selected={p.selectedNotes.includes(id)}
+            onSelect={(add) => p.onSelectNote(id, add)}
             onMove={(patch, done) => p.onMoveNote(id, patch, done)}
             onDelete={() => p.onDeleteNote(id)}
             onContext={(e) => p.onContext({ type: "note", id }, e)}
@@ -518,7 +530,7 @@ function LiveFrame(props: { src: string; title: string; reloadKey: number; editi
   );
 }
 
-function NoteView(props: { note: Note; zoom: number; selected: boolean; onSelect: () => void; onMove: (patch: Partial<Note>, done: boolean) => void; onDelete: () => void; onContext: (e: RMouseEvent) => void }) {
+function NoteView(props: { id: string; note: Note; zoom: number; selected: boolean; onSelect: (add: boolean) => void; onMove: (patch: Partial<Note>, done: boolean) => void; onDelete: () => void; onContext: (e: RMouseEvent) => void }) {
   const { note: n } = props;
   const drag = useDrag(props.zoom);
   const [editing, setEditing] = useState(false);
@@ -565,11 +577,13 @@ function NoteView(props: { note: Note; zoom: number; selected: boolean; onSelect
   return (
     <div
       className={`note note-${n.kind} ${props.selected ? "selected" : ""}`}
+      data-note={props.id}
       style={style}
       onPointerDown={(e) => {
         if (editing || e.button !== 0) return;
         e.stopPropagation();
-        props.onSelect();
+        if (e.shiftKey) props.onSelect(true);
+        else if (!props.selected) props.onSelect(false);
         drag.start(e, { x: n.x, y: n.y }, (d, done) => props.onMove({ x: Math.round(d.x), y: Math.round(d.y) }, done));
       }}
       onPointerMove={drag.move}
@@ -581,7 +595,7 @@ function NoteView(props: { note: Note; zoom: number; selected: boolean; onSelect
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        props.onSelect();
+        props.onSelect(false);
         props.onContext(e);
       }}
     >

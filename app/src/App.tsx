@@ -64,7 +64,10 @@ export function App() {
   const [page, setPage] = useState<string | null>(null);
   const [tool, setTool] = useState<Tool>("select");
   const [selected, setSelected] = useState<string[]>([]);
-  const [selectedNote, setSelectedNote] = useState<string | null>(null);
+  const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
+  /** Single selected note (options panel, arrow keys); null when none or several */
+  const selectedNote = selectedNotes.length === 1 ? selectedNotes[0] : null;
+  const setSelectedNote = (id: string | null) => setSelectedNotes(id ? [id] : []);
   const [editFile, setEditFile] = useState<string | null>(null);
   const [playFile, setPlayFile] = useState<string | null>(null);
   const [inlinePlay, setInlinePlay] = useState<string | null>(null);
@@ -506,7 +509,7 @@ export function App() {
   }, [firstRunHint]);
   const select = (files: string[], m: "replace" | "toggle" | "add" = "replace") => {
     setSelected((cur) => (m === "replace" ? files : m === "add" ? [...new Set([...cur, ...files])] : files.reduce((a, f) => (a.includes(f) ? a.filter((x) => x !== f) : [...a, f]), cur)));
-    if (files.length) setSelectedNote(null);
+    if (files.length) setSelectedNotes([]);
     setSelectedShape(null);
   };
   const pageField = () => (pages.length && currentPage ? { page: currentPage } : {});
@@ -652,12 +655,13 @@ export function App() {
     setSelected([]);
     setTool("select");
   };
-  const deleteNote = (id: string) => {
+  const deleteNotes = (ids: string[]) => {
     update((b) => {
-      const { [id]: _, ...rest } = b.notes;
+      const rest = { ...b.notes };
+      for (const id of ids) delete rest[id];
       return { ...b, notes: rest };
     }, strings.history.deleteNote);
-    setSelectedNote(null);
+    setSelectedNotes([]);
     toast({ text: strings.toast.noteDeleted, action: undoAction });
   };
 
@@ -847,7 +851,7 @@ export function App() {
         items: [
           { label: strings.menu.duplicateInFront, icon: "copy", shortcut: `${mod}D`, run: () => { const n = board.notes[t.id]; const id = newNoteId(); update((b) => ({ ...b, notes: { ...b.notes, [id]: { ...n, x: n.x + 40, y: n.y + 40 } } }), strings.history.duplicateNote); setSelectedNote(id); } },
           "sep",
-          { label: strings.menu.delete, icon: "trash", shortcut: "⌫", danger: true, run: () => deleteNote(t.id) },
+          { label: strings.menu.delete, icon: "trash", shortcut: "⌫", danger: true, run: () => deleteNotes([t.id]) },
         ],
       });
     } else {
@@ -1159,7 +1163,7 @@ export function App() {
           }
         });
       }
-      if (selectedNote) return run(() => deleteNote(selectedNote));
+      if (selectedNotes.length) return run(() => deleteNotes(selectedNotes));
       if (selected.length && !editFile) return run(() => void deleteBoards(selected));
       return;
     }
@@ -1184,13 +1188,12 @@ export function App() {
       }
       return run(() => {});
     }
-    if (e.key.startsWith("Arrow") && !editFile && (selectedShape || selectedNote)) {
+    if (e.key.startsWith("Arrow") && !editFile && (selectedShape || selectedNotes.length)) {
       const d = e.altKey ? 100 : e.shiftKey ? 10 : 1;
       const dx = e.key === "ArrowLeft" ? -d : e.key === "ArrowRight" ? d : 0;
       const dy = e.key === "ArrowUp" ? -d : e.key === "ArrowDown" ? d : 0;
       if (selectedShape) return run(() => patchShape(selectedShape, { x: shapes[selectedShape].x + dx, y: shapes[selectedShape].y + dy }, strings.history.moveShape));
-      const n = board.notes[selectedNote!];
-      return run(() => update((b) => ({ ...b, notes: { ...b.notes, [selectedNote!]: { ...n, x: n.x + dx, y: n.y + dy } } }), strings.history.moveNote));
+      return run(() => update((b) => ({ ...b, notes: { ...b.notes, ...Object.fromEntries(selectedNotes.filter((id) => b.notes[id]).map((id) => [id, { ...b.notes[id], x: b.notes[id].x + dx, y: b.notes[id].y + dy }])) } }), strings.history.moveNote));
     }
     if (e.key.startsWith("Arrow") && selected.length && !editFile) {
       const d = e.altKey ? 100 : e.shiftKey ? 10 : 1;
@@ -1476,13 +1479,19 @@ export function App() {
             visibleBoards={visibleBoards}
             visibleNotes={visibleNotes}
             selected={selected}
-            selectedNote={selectedNote}
+            selectedNotes={selectedNotes}
             editFile={editFile}
             reloadKeys={reloadKeys}
             onSelect={select}
-            onSelectNote={(id) => {
-              setSelectedNote(id);
-              if (id) setSelected([]);
+            onSelectNote={(id, add) => {
+              if (!id) return setSelectedNotes([]);
+              setSelectedNotes((cur) => (add ? (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]) : [id]));
+              setSelected([]);
+              setSelectedShape(null);
+            }}
+            onMarquee={(hit, additive) => {
+              setSelected((cur) => (additive ? [...new Set([...cur, ...hit.boards])] : hit.boards));
+              setSelectedNotes((cur) => (additive ? [...new Set([...cur, ...hit.notes])] : hit.notes));
               setSelectedShape(null);
             }}
             onMoveBoards={(patches, done) =>
@@ -1491,8 +1500,19 @@ export function App() {
                 done ? (Object.values(patches).some((p) => p.w != null) ? strings.history.resizeBoard : strings.history.moveBoard) : undefined,
               )
             }
-            onMoveNote={(id, patch, done) => update((b) => ({ ...b, notes: { ...b.notes, [id]: { ...b.notes[id], ...patch } } }), done ? ("text" in patch ? strings.history.editNote : strings.history.moveNote) : undefined)}
-            onDeleteNote={deleteNote}
+            onMoveNote={(id, patch, done) =>
+              update((b) => {
+                const cur = b.notes[id];
+                // Dragging one note of a multi-selection moves the others by the same amount
+                const dx = patch.x != null ? patch.x - cur.x : 0;
+                const dy = patch.y != null ? patch.y - cur.y : 0;
+                const group = (dx || dy) && !("text" in patch) && selectedNotes.length > 1 && selectedNotes.includes(id) ? selectedNotes : [id];
+                const notes = { ...b.notes };
+                for (const k of group) notes[k] = k === id ? { ...cur, ...patch } : { ...notes[k], x: notes[k].x + dx, y: notes[k].y + dy };
+                return { ...b, notes };
+              }, done ? ("text" in patch ? strings.history.editNote : strings.history.moveNote) : undefined)
+            }
+            onDeleteNote={(id) => deleteNotes([id])}
             onPlay={(f) => (inlinePlay === f ? stopInline() : setInlinePlay(f))}
             playing={inlinePlay}
             onEdit={(f) => {
@@ -1630,7 +1650,7 @@ export function App() {
                   return { ...b, notes: { ...b.notes, [selectedNote]: n } };
                 }, strings.history.noteStyle)
               }
-              onDelete={() => deleteNote(selectedNote)}
+              onDelete={() => deleteNotes([selectedNote])}
             />
           )}
           {!editFile && one && board.boards[one] && (
@@ -1683,6 +1703,16 @@ export function App() {
               onChange={(g: LayoutGuide[], label) => update((b) => ({ ...b, guides: { ...(b.guides ?? {}), [one]: g } }), label)}
             />
             </Collapsible>
+          )}
+          {!editFile && selectedNotes.length > 1 && (
+            <section className="board-opts">
+              <div className="sec-head">
+                <span>{strings.notes.selectedN(selectedNotes.length)}</span>
+              </div>
+              <div className="btn-row">
+                <button className="icon-btn danger" aria-label={strings.notes.deleteAll} title={strings.notes.deleteAll} onClick={() => deleteNotes(selectedNotes)}><Icon name="trash" /></button>
+              </div>
+            </section>
           )}
           {!editFile && selected.length > 1 && (
             <section className="board-opts">

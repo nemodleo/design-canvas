@@ -313,6 +313,8 @@ export const strings = {
   },
 
   notes: {
+    selectedN: (n: number) => `${n} notes selected`,
+    deleteAll: "Delete selected notes",
     options: "Note options",
     title: "Title",
     sticky: "Sticky note",
