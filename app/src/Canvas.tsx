@@ -294,7 +294,6 @@ export function Canvas(p: Props) {
               }}
               onPointerMoveLabel={(e) => moveGroupDrag(e)}
               onPointerUpLabel={endGroupDrag}
-              onSelect={(e) => p.onSelect([f], e.shiftKey ? "toggle" : "replace")}
               onResize={(patch, done) => p.onMoveBoards({ [f]: patch }, done)}
               onPlay={() => p.onPlay(f)}
               onEdit={() => p.onEdit(p.editFile === f ? null : f)}
@@ -339,7 +338,6 @@ function BoardView(props: {
   onPointerDownLabel: (e: RPointerEvent) => void;
   onPointerMoveLabel: (e: RPointerEvent) => void;
   onPointerUpLabel: (e: RPointerEvent) => void;
-  onSelect: (e: RPointerEvent) => void;
   onResize: (patch: Partial<BoardItem>, done: boolean) => void;
   onPlay: () => void;
   onEdit: () => void;
@@ -409,11 +407,11 @@ function BoardView(props: {
           }
         }}
         onPointerDown={(e) => {
-          if (e.button === 0 && !props.editing && !props.playing) {
-            e.stopPropagation();
-            props.onSelect(e);
-          }
+          // Press on the frame selects, and a drag from there moves the board (same as the label)
+          if (e.button === 0 && !props.editing && !props.playing) props.onPointerDownLabel(e);
         }}
+        onPointerMove={(e) => !props.editing && !props.playing && props.onPointerMoveLabel(e)}
+        onPointerUp={(e) => !props.editing && !props.playing && props.onPointerUpLabel(e)}
         onContextMenu={(e) => !props.editing && !props.playing && ctx(e)}
       >
         {!props.exists ? (

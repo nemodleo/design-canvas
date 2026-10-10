@@ -161,6 +161,8 @@ kbd {
 .board.frameless .board-frame { box-shadow: none; background: transparent; }
 .board:hover:not(.selected) .board-frame { box-shadow: 0 0 0 2px var(--line-strong); }
 .board.selected .board-frame { box-shadow: 0 0 0 3px var(--select); }
+.board:not(.editing):not(.playing) .board-frame { cursor: grab; }
+.board.selected:not(.editing):not(.playing) .board-frame { cursor: move; }
 .board.editing .board-frame { box-shadow: 0 0 0 4px var(--select), 0 0 0 10px var(--select-weak); }
 /* Edit mode: everything but the edited board steps back */
 .canvas.editing .board:not(.editing), .canvas.editing .shape, .canvas.editing .note { opacity: 0.35; transition: opacity 160ms; }
