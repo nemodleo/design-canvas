@@ -1070,8 +1070,8 @@ export function App() {
     if (cmd && e.key === "[" && selected.length) return run(() => reorder(selected, "back"));
     if (cmd && e.key === "0") return run(() => zoomTo(1));
     if (cmd && e.key === "1") return run(fitAll);
-    if (cmd && (e.key === "=" || e.key === "+")) return run(() => zoomBy(1.5));
-    if (cmd && e.key === "-") return run(() => zoomBy(1 / 1.5));
+    if (cmd && (e.key === "=" || e.key === "+")) return run(() => zoomBy(2));
+    if (cmd && e.key === "-") return run(() => zoomBy(1 / 2));
     if (cmd && e.key === "\\") return run(() => toggleUi());
     if (e.ctrlKey && !e.metaKey && k === "g") return run(() => setGuidesOn((v) => !v));
     if (cmd && k === "g" && editFile && edit.state.paths.length >= 2) return run(() => void wrapSelected("flex"));
@@ -1351,13 +1351,13 @@ export function App() {
         </div>
         <div className="tb-zone tb-right">
           <div className="tool-group">
-            <button className="icon-btn" aria-label={strings.toolbar.zoomOut} title={strings.toolbar.zoomOutTitle(mod)} onClick={() => zoomBy(1 / 1.5)}>
+            <button className="icon-btn" aria-label={strings.toolbar.zoomOut} title={strings.toolbar.zoomOutTitle(mod)} onClick={() => zoomBy(1 / 2)}>
               <span className="glyph">−</span>
             </button>
             <button className="zoom" aria-label={strings.toolbar.zoom100} title={strings.toolbar.zoom100Title(mod)} onClick={() => zoomTo(1)}>
               {Math.round(view.zoom * 100)}%
             </button>
-            <button className="icon-btn" aria-label={strings.toolbar.zoomIn} title={strings.toolbar.zoomInTitle(mod)} onClick={() => zoomBy(1.5)}>
+            <button className="icon-btn" aria-label={strings.toolbar.zoomIn} title={strings.toolbar.zoomInTitle(mod)} onClick={() => zoomBy(2)}>
               <Icon name="plus" />
             </button>
             <button className="icon-btn" aria-label={strings.toolbar.fitAll} title={strings.toolbar.fitAllTitle} onClick={fitAll}>
