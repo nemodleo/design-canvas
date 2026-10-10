@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="board-size" content="1440x900">
+<title>AI chat</title>
+<link rel="stylesheet" href="/assets/easel.css">
+<style>.app{width:1440px;height:900px}</style>
+</head>
+<body class="">
+<div class="app"><header class="toolbar">
+  <div class="tb-zone tb-left">
+    <button class="icon-btn on" title="Left panel"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM15 5v14"/></svg></button>
+    <div class="tool-group" role="radiogroup"><button class="icon-btn tool on" title="select"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3l13 8-6 1.5L9.5 19z"/></svg></button><button class="icon-btn tool" title="hand"><svg class="ic" viewBox="0 0 24 24"><path d="M8 12V6.5a1.5 1.5 0 0 1 3 0V11m0-5.5V5a1.5 1.5 0 0 1 3 0v6m0-4.5a1.5 1.5 0 0 1 3 0V13a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3.3 14a1.5 1.5 0 0 1 2.4-1.8L8 15"/></svg></button><button class="icon-btn tool" title="board"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg></button><button class="icon-btn tool" title="title"><svg class="ic" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M9 19h6"/></svg></button><button class="icon-btn tool" title="sticky"><svg class="ic" viewBox="0 0 24 24"><path d="M5 4h14v10l-5 6H5zM14 20v-6h5"/></svg></button></div>
+    <div class="tool-group"><button class="icon-btn " title="rect"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/></svg></button><button class="icon-btn " title="oval"><svg class="ic" viewBox="0 0 24 24"><path d="M12 19c4.4 0 8-3.1 8-7s-3.6-7-8-7-8 3.1-8 7 3.6 7 8 7z"/></svg></button><button class="icon-btn " title="line"><svg class="ic" viewBox="0 0 24 24"><path d="M5 19L19 5"/></svg></button><button class="icon-btn " title="arrow"><svg class="ic" viewBox="0 0 24 24"><path d="M5 19L19 5M10 5h9v9"/></svg></button><button class="icon-btn " title="pen"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5l3 3L8 19zM14 7l3 3"/></svg></button><button class="icon-btn " title="image"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9h.01"/></svg></button></div>
+    <div class="tool-group"><button class="icon-btn " title="undo"><svg class="ic" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button class="icon-btn " title="redo"><svg class="ic" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg></button></div>
+    <button class="new-board"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New board <svg class="ic s" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+  </div>
+  <div class="tb-zone tb-center"><strong class="app-title">Tidy — habit tracker</strong></div>
+  <div class="tb-zone tb-right">
+    <div class="tool-group"><button class="icon-btn" title="Zoom out"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button><span class="zoom">48%</span><button class="icon-btn " title="Zoom in"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button><button class="icon-btn " title="Fit all"><svg class="ic" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
+    <button class="ask-ai on"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg> <span class="ask-ai-label">Ask AI</span></button>
+    <button class="icon-btn " title="View"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></button>
+  </div>
+</header>
+<div class="main"><aside class="left">
+  <div class="left-tabs"><button class="on">Boards</button><button>Assets</button><button>Tokens</button></div>
+  <section class="left-pages">
+    <div class="sec-head"><span>Pages</span><button class="icon-btn sm"><svg class="ic s" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <p class="empty">Viewing everything as one page. Use + to split it into pages.</p>
+  </section>
+  <section class="left-boards">
+    <div class="sec-head"><span>Boards 7</span></div>
+    <label class="search"><svg class="ic s" viewBox="0 0 24 24"><path d="M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14zM20 20l-4-4"/></svg><span>Find boards (⌘K)</span></label>
+    <ul class="board-list"><li><button class="row on" title="home.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">Today</span></button></li><li><button class="row" title="habit.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">Habit detail</span></button></li><li><button class="row" title="new-habit.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">New habit</span></button></li><li><button class="row" title="stats.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">Stats</span></button></li><li><button class="row" title="settings.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">Settings</span></button></li><li><button class="row" title="empty.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">Empty state</span></button></li><li><button class="row" title="landing.html"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg><span class="row-text">Landing (desktop)</span></button></li></ul>
+  </section>
+</aside>
+<div class="canvas-wrap"><div class="canvas"><div class="board selected" style="left:60px;top:120px;width:187px;height:405px">
+  <div class="board-label"><span class="board-title">Today</span><span class="board-file">home.html</span><span class="board-btns"><button class="icon-btn sm edit-pill"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg> Edit</button></span></div>
+  <div class="board-frame"><div class="ph"><div class="bar">Today</div><div class="hero"></div><div class="line w"></div><div class="line n"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="btn-k">Add habit</div></div></div>
+</div>
+<div class="board " style="left:300px;top:120px;width:187px;height:405px">
+  <div class="board-label"><span class="board-title">Habit detail</span><span class="board-file">habit.html</span><span class="board-btns"><button class="icon-btn sm edit-pill"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg> Edit</button></span></div>
+  <div class="board-frame"><div class="ph"><div class="bar">Habit detail</div><div class="line w"></div><div class="line"></div><div class="line n"></div><div class="card"></div><div class="line w"></div><div class="line"></div><div class="btn-k">Mark done</div></div></div>
+</div>
+<div class="board " style="left:540px;top:120px;width:187px;height:405px">
+  <div class="board-label"><span class="board-title">New habit</span><span class="board-file">new-habit.html</span><span class="board-btns"><button class="icon-btn sm edit-pill"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg> Edit</button></span></div>
+  <div class="board-frame"><div class="ph"><div class="bar">New habit</div><div class="line n"></div><div class="card"></div><div class="line n"></div><div class="card"></div><div class="btn-k">Save</div></div></div>
+</div>
+<div class="board-resize" style="left:245px;top:520px"></div></div><div class="minimap"><svg width="200" height="130">
+  <rect x="20" y="20" width="26" height="56" class="mm-sel"/><rect x="54" y="20" width="26" height="56" class="mm-board"/><rect x="88" y="20" width="26" height="56" class="mm-board"/><rect x="122" y="20" width="26" height="56" class="mm-board"/><rect x="156" y="20" width="26" height="56" class="mm-board"/>
+  <rect x="20" y="86" width="26" height="30" class="mm-board"/><rect x="54" y="86" width="80" height="30" class="mm-board"/>
+  <rect x="10" y="8" width="150" height="90" class="mm-view"/></svg></div></div><aside class="right">
+  <div class="right-tabs"><button>Properties</button><button class="on">AI <kbd>⌘J</kbd></button></div>
+  <div class="chat">
+    <div class="messages">
+      <div class="msg me"><div class="bubble">Make the primary button use the Blue token and round it more.</div></div>
+      <div class="msg ai">
+        <div class="tool-line"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg> read_file <code>screens/home.html</code></div>
+        <div class="tool-line"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg> set_style <code>home.html 0/1/6</code> background → var(--blue)</div>
+        <div class="tool-line"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></svg> set_style <code>home.html 0/1/6</code> border-radius → 20px</div>
+        <div class="bubble">Done. The Add habit button now uses <strong>Blue</strong> (#3E7BFA) with a 20px radius. Contrast with white text is 4.6:1 (AA).</div>
+      </div>
+      <div class="msg me"><div class="bubble">Apply the same to the other screens.</div></div>
+      <div class="msg ai"><div class="tool-line"><span class="spinner"></span> Editing habit.html…</div></div>
+    </div>
+    <div class="chips"><span class="chip"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg> Today</span><span class="chip"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16"/></svg> Habit detail</span><span class="chip"><svg class="ic s" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg> 1 comment</span></div>
+    <div class="composer"><textarea placeholder="What should change? ⌘↵ to send"></textarea><div class="foot"><span>Claude Code · tools: 20</span><button class="btn primary">Send</button></div></div>
+  </div>
+</aside>
+</div></div></body>
+</html>

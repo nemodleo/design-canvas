@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "title": "Easel UI",
+  "pages": [],
+  "boards": {
+    "canvas-light.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "Canvas · light"},
+    "canvas-dark.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Canvas · dark"},
+    "edit-mode.html": {"x": 0, "y": 1000, "w": 1440, "h": 900, "title": "Edit mode"},
+    "ai-chat.html": {"x": 1520, "y": 1000, "w": 1440, "h": 900, "title": "AI chat"},
+    "first-run.html": {"x": 0, "y": 2000, "w": 1440, "h": 900, "title": "First run"},
+    "board-groups.html": {"x": 1520, "y": 2000, "w": 1440, "h": 900, "title": "Board list · groups"},
+    "narrow-600.html": {"x": 3040, "y": 0, "w": 600, "h": 700, "title": "Narrow window · 600"}
+  },
+  "order": [
+    "canvas-light.html",
+    "canvas-dark.html",
+    "edit-mode.html",
+    "ai-chat.html",
+    "first-run.html",
+    "board-groups.html",
+    "narrow-600.html"
+  ],
+  "notes": {
+    "n1": {"kind": "title", "x": 0, "y": -200, "maxW": 1400, "text": "Easel UI"},
+    "n3": {"kind": "sticky", "x": 3040, "y": 1000, "w": 360, "text": "Easel drawn in Easel. Edit these boards to redesign the app.\nassets/easel.css holds the chrome styles; app/src/style.css mirrors it.", "color": "blue"},
+    "n2": {"kind": "sticky", "x": 3040, "y": 800, "w": 360, "text": "Under 1000px the panels are drawers. Under 640px the zoom readout and Fit hide so the toolbar stays on one row.", "color": "yellow"}
+  },
+  "shapes": {},
+  "launch": {"view": "canvas"}
+}
