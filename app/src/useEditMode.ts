@@ -188,7 +188,7 @@ export function useEditMode(editFile: string | null, getFrame: (f: string) => HT
         }
         // Forward other shortcuts to the app window (⌘Z etc.)
         window.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, code: e.code, metaKey: e.metaKey, ctrlKey: e.ctrlKey, shiftKey: e.shiftKey, altKey: e.altKey }));
-        if (/^(Arrow|Delete|Backspace)/.test(e.key) || ((e.metaKey || e.ctrlKey) && /^[zydcvg]$/i.test(e.key))) e.preventDefault();
+        if (/^(Arrow|Delete|Backspace|Tab|Enter)/.test(e.key) || ((e.metaKey || e.ctrlKey) && /^[zydcvg]$/i.test(e.key))) e.preventDefault();
       };
       const onScroll = () => refresh();
       doc.addEventListener("mousedown", onDown, true);

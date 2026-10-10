@@ -182,21 +182,25 @@ export function ChatPanel(p: {
   return (
     <section className="chat" aria-label={strings.chat.aria}>
       <div className="chat-head">
-        <label className="agent-pick">
-          <span className="sr-only">{strings.chat.agent}</span>
-          <select value={agent} onChange={(e) => setAgent(e.target.value)} disabled={!!running} aria-label={strings.chat.agent}>
-            {(agents.length ? agents : [{ id: "claude", label: "Claude Code", ok: true }, { id: "codex", label: "Codex", ok: true }]).map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.label}
-                {a.ok ? "" : strings.chat.notInstalled}
-              </option>
-            ))}
-          </select>
+        <label className="agent-pick" title={strings.chat.agentHint}>
+          <span className="agent-label muted small">{strings.chat.agent}</span>
+          {agents.filter((a) => a.ok).length <= 1 && agents.length > 0 ? (
+            <span className="agent-name">{current?.label ?? agent}</span>
+          ) : (
+            <select value={agent} onChange={(e) => setAgent(e.target.value)} disabled={!!running} aria-label={strings.chat.agent}>
+              {(agents.length ? agents : [{ id: "claude", label: "Claude Code", ok: true }, { id: "codex", label: "Codex", ok: true }]).map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.label}
+                  {a.ok ? "" : strings.chat.notInstalled}
+                </option>
+              ))}
+            </select>
+          )}
         </label>
         {sessions[agent] && <span className="muted small">{strings.chat.continuing}</span>}
         <div className="spacer" />
         <button
-          className="icon-btn sm"
+          className="icon-btn sm new-chat"
           aria-label={strings.chat.newChat}
           title={strings.chat.newChat}
           disabled={!!running || (!msgs.length && !sessions[agent])}
@@ -205,7 +209,7 @@ export function ChatPanel(p: {
             setSessions({});
           }}
         >
-          <Icon name="plus" size={14} />
+          <Icon name="plus" size={14} /> <span>{strings.chat.newChat}</span>
         </button>
       </div>
       <div className="chat-list" ref={listRef} aria-live="polite">

@@ -24,6 +24,7 @@ export const LeftPanel = forwardRef<HTMLInputElement, {
   onPick: (file: string, add: boolean) => void;
   onBoardMenu: (file: string, e: { clientX: number; clientY: number }) => void;
   header?: React.ReactNode;
+  onGroupMenu?: (key: string, files: string[], e: { clientX: number; clientY: number }) => void;
 }>(function LeftPanel(p, searchRef) {
   const [q, setQ] = useState("");
   const [dragPage, setDragPage] = useState<string | null>(null);
@@ -153,9 +154,9 @@ export const LeftPanel = forwardRef<HTMLInputElement, {
               const open = !closed[g.key] || g.files.some((f) => p.selected.includes(f));
               return (
                 <li key={g.key} className={`group ${open ? "open" : ""}`}>
-                  <button className="row group-head" aria-expanded={open} title={strings.boardList.groupTitle(g.files.length)} onClick={() => toggleGroup(g.key)}>
+                  <button className="row group-head" aria-expanded={open} title={strings.boardList.groupTitle(g.files.length)} onClick={() => toggleGroup(g.key)} onContextMenu={(e) => { if (!p.onGroupMenu) return; e.preventDefault(); p.onGroupMenu(g.key, g.files, e); }}>
                     <Icon name="chevronRight" size={14} className="chev" />
-                    <span className="row-text">{g.label}</span>
+                    <span className="row-text">{(g.key && p.board.groupNames?.[g.key]) || g.label}</span>
                     <span className="row-count">{g.files.length}</span>
                   </button>
                   {open && <ul>{g.files.map(row)}</ul>}
@@ -184,7 +185,7 @@ export function Minimap({ rects, selected, view, size, onJump }: { rects: (Rect 
   const s = Math.min(W / box.w, H / box.h);
   const ox = (W - box.w * s) / 2;
   const oy = (H - box.h * s) / 2;
-  const vp = { x: (-view.x / view.zoom - box.x) * s + ox, y: (-view.y / view.zoom - box.y) * s + oy, w: (size.w / view.zoom) * s, h: (size.h / view.zoom) * s };
+  const vp = { x: (-view.x / view.zoom - box.x) * s + ox, y: (-view.y / view.zoom - box.y) * s + oy, w: Math.max(0, (size.w / view.zoom) * s), h: Math.max(0, (size.h / view.zoom) * s) };
   const dragging = useRef(false);
   const jump = (e: React.PointerEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();

@@ -130,6 +130,7 @@ export const strings = {
     emptyPage: "No boards on this page yet. Press B and drag on the canvas to draw one.",
     fileMissing: "File missing",
     otherGroup: "Other",
+    mainPage: "Main",
     groupTitle: (n: number) => `${plural(n, "board", "boards")} · click to collapse or expand`,
   },
 
@@ -141,7 +142,7 @@ export const strings = {
     board: "Board",
     comments: "Comments",
     guides: "Layout guides",
-    tweaks: "Tweaks",
+    tweaks: "Adjustable values",
     tokenCheck: "Token check",
     a11y: "Accessibility",
     properties: "Properties",
@@ -156,8 +157,8 @@ export const strings = {
     height: "Height",
     radius: "Radius",
     interactive: "Interactive (Play)",
-    frameless: "Frameless",
-    fill: "Fill window (page-style)",
+    frameless: "No frame",
+    fill: "Stretch to window",
     launch: "Open as launch screen",
     page: "Page",
     focus: "Focus view",
@@ -362,6 +363,7 @@ export const strings = {
   },
 
   dialog: {
+    renameGroupTitle: "Rename group",
     menu: "Menu",
     cancel: "Cancel",
     ok: "OK",
@@ -433,6 +435,8 @@ export const strings = {
 
   /** Undo/redo history labels (shown in Undo/Redo tooltips and toasts) */
   history: {
+    renameGroup: "Rename group",
+    pageFromGroup: "Page from group",
     boardOptions: "Board options",
     front: "Bring to front",
     back: "Send to back",
@@ -473,6 +477,8 @@ export const strings = {
 
   menu: {
     newBoard: "New board",
+    renameGroup: "Rename group…",
+    pageFromGroup: "Make a page from this group",
     drawWithB: "B to draw",
     // page menu
     rename: "Rename",
@@ -663,6 +669,7 @@ export const strings = {
   chat: {
     aria: "AI chat",
     agent: "Agent",
+    agentHint: "Which agent edits the files",
     notInstalled: " (not installed)",
     continuing: "Continuing conversation",
     newChat: "New chat",

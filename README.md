@@ -137,7 +137,7 @@ npm run design           # http://localhost:4317
 | Find | Left "Boards" tab: ⌘K search and list; pages (drag to reorder; right-click to rename, delete, or set the launch page) |
 | Boards | Draw with the board tool (B), use a "New board" template (Blank · Mobile screen · Desktop screen · Document), or drop an HTML file on the canvas. Duplicate ⌘D, rename F2 (renaming the file offers to update references), Delete (confirm, trash, undo), Bring to front / Send to back ⌘] ⌘[ |
 | Multiple items | Drag on empty space to marquee-select or use Shift; move together (snap guides, Alt to disable); arrow keys 1, Shift 10, Option 100 |
-| Board options | Right "Properties": position, size, Radius, Frameless, Interactive (Play), Fill window (page-style), Open as launch screen, Layout guides (Columns · Rows · Grid, up to 6, ⌃G), Tweaks |
+| Board options | Right "Properties": position, size, Radius, No frame, Interactive (Play), Stretch to window, Open as launch screen, Layout guides (Columns · Rows · Grid, up to 6, ⌃G), Adjustable values |
 | View | Focus view (F, ←→), Play in place (P or ▶, Esc), Play full screen (right-click) |
 | Notes and shapes | Title (T), sticky note (N, 8 colors, size, bold, italic), Rectangle (R), Oval (O), Line (L), Arrow (A), Pen (P when no board is selected), image (Assets or paste) |
 | Edit mode | Double-click or E. Click or Shift, Esc for parent, Enter for child, ↑↓ for siblings, Option+↑↓ to reorder, ⌘A for all siblings, ⌘G Wrap in flex |

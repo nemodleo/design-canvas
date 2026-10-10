@@ -822,8 +822,12 @@ export function App() {
     const many = files.length > 1;
     return [
       { label: editFile === file ? strings.menu.stopEditing : strings.menu.edit, icon: "edit", shortcut: "E", disabled: many, run: () => setEditFile(editFile === file ? null : file) },
-      { label: inlinePlay === file ? strings.menu.stopPlay : strings.menu.playInPlace, icon: "play", shortcut: "P", disabled: many || !b?.is_interactive, run: () => (inlinePlay === file ? stopInline() : setInlinePlay(file)) },
-      { label: strings.menu.playFullScreen, icon: "play", disabled: many || !b?.is_interactive, run: () => setPlayFile(file) },
+      ...(b?.is_interactive
+        ? [
+            { label: inlinePlay === file ? strings.menu.stopPlay : strings.menu.playInPlace, icon: "play" as IconName, shortcut: "P", disabled: many, run: () => (inlinePlay === file ? stopInline() : setInlinePlay(file)) },
+            { label: strings.menu.playFullScreen, icon: "play" as IconName, disabled: many, run: () => setPlayFile(file) },
+          ]
+        : []),
       { label: strings.menu.askReview, icon: "comment", run: () => openChat(strings.prompts.review, files) },
       { label: strings.menu.focusView, icon: "focus", shortcut: "F", disabled: many, run: () => setFocusFile(file) },
       { label: strings.menu.askAI, icon: "comment", shortcut: `${mod}J`, run: () => openChat(undefined, files) },
@@ -1016,6 +1020,14 @@ export function App() {
     return () => window.clearTimeout(t);
   }, [lintTarget, frameTick, reloadKeys[lintTarget ?? ""], tokens?.minTarget, view.zoom >= 0.25]);
   /** Compact shapes picker for narrow windows */
+  /** Under 480px every tool lives in one menu */
+  const toolsMenu = (at: { clientX: number; clientY: number }) =>
+    setMenu({
+      x: at.clientX,
+      y: at.clientY,
+      title: strings.toolbar.canvasTools,
+      items: TOOLS.map((t) => ({ label: t.label, icon: t.icon, shortcut: t.key, check: tool === t.id, run: () => setTool(t.id) })),
+    });
   const shapesMenu = (at: { clientX: number; clientY: number }) =>
     setMenu({
       x: at.clientX,
@@ -1175,7 +1187,7 @@ export function App() {
       return;
     }
     // Arrows while editing: move selection to sibling, parent or child; Alt+↑↓ reorders among siblings
-    if (e.key.startsWith("Arrow") && editFile && edit.state.selection) {
+    if ((e.key.startsWith("Arrow") || e.key === "Tab" || e.key === "Enter") && editFile && edit.state.selection) {
       const sel = edit.state.selection;
       const doc = frames.current.get(editFile)?.contentDocument;
       const el = doc && elementAt(doc, sel.path);
@@ -1187,8 +1199,10 @@ export function App() {
         if (to < 0 || to >= (el.parentElement?.children.length ?? 0)) return run(() => {});
         return run(() => void moveElement(sel.path, { toParentPath: parent, index: to, freeze: [] }));
       }
-      const next = e.key === "ArrowDown" || e.key === "ArrowRight" ? el.nextElementSibling : el.previousElementSibling;
-      const target = e.key === "ArrowLeft" && e.shiftKey ? el.parentElement : e.key === "ArrowRight" && e.shiftKey ? el.firstElementChild : next;
+      // Tab / Shift+Tab walk siblings, Enter goes into the first child (Esc goes back up to the parent)
+      const forward = e.key === "ArrowDown" || e.key === "ArrowRight" || (e.key === "Tab" && !e.shiftKey);
+      const next = forward ? el.nextElementSibling : el.previousElementSibling;
+      const target = (e.key === "ArrowLeft" && e.shiftKey) ? el.parentElement : (e.key === "ArrowRight" && e.shiftKey) || e.key === "Enter" ? el.firstElementChild : next;
       if (target && target !== doc.body) {
         const tp = pathOf(target);
         if (tp != null) return run(() => void edit.select([tp]));
@@ -1312,7 +1326,11 @@ export function App() {
           <button className={`icon-btn ${leftOpen ? "on" : ""}`} aria-label={strings.toolbar.leftPanel} aria-pressed={leftOpen} title={strings.toolbar.leftPanelTitle(mod)} onClick={() => setLeftOpen((v) => !v)}>
             <Icon name="panel" style={{ transform: "scaleX(-1)" }} />
           </button>
-          <div className="tool-group" role="radiogroup" aria-label={strings.toolbar.canvasTools}>
+          <button className="icon-btn tb-tools-compact" aria-label={strings.toolbar.canvasTools} aria-haspopup="menu" title={strings.toolbar.canvasTools} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); toolsMenu({ clientX: r.left, clientY: r.bottom + 4 }); }}>
+            <Icon name={TOOLS.find((t) => t.id === tool)?.icon ?? "select"} />
+            <Icon name="chevronDown" size={12} />
+          </button>
+          <div className="tool-group tb-tools-full" role="radiogroup" aria-label={strings.toolbar.canvasTools}>
             {TOOLS.slice(0, 5).map((t) => (
               <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.tool(t.hint, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile && t.id !== "select" && t.id !== "hand"} onClick={() => setTool(t.id)}>
                 <Icon name={t.icon} />
@@ -1454,6 +1472,38 @@ export function App() {
               if (!add) goTo([f]);
               if (narrow && !add) setLeftOpen(false);
             }}
+            onGroupMenu={(key, files, at) =>
+              setMenu({
+                x: at.clientX,
+                y: at.clientY,
+                title: (key && board.groupNames?.[key]) || key || strings.boardList.otherGroup,
+                items: [
+                  ...(key
+                    ? [{
+                        label: strings.menu.renameGroup,
+                        icon: "title" as IconName,
+                        run: async () => {
+                          const r = await ask.prompt({ title: strings.dialog.renameGroupTitle, label: strings.dialog.name, value: board.groupNames?.[key] ?? key, ok: strings.dialog.save });
+                          if (!r?.value.trim()) return;
+                          update((b) => ({ ...b, groupNames: { ...(b.groupNames ?? {}), [key]: r.value.trim() } }), strings.history.renameGroup);
+                        },
+                      }]
+                    : []),
+                  {
+                    label: strings.menu.pageFromGroup,
+                    icon: "page" as IconName,
+                    run: async () => {
+                      // With no pages yet, the rest of the boards need a page of their own first
+                      if (!pages.length && !(await pageApi({ action: "add", name: strings.boardList.mainPage }))) return;
+                      const res = await pageApi({ action: "add", name: (key && board.groupNames?.[key]) || key || strings.boardList.otherGroup });
+                      if (!res?.id) return;
+                      update((b) => ({ ...b, boards: { ...b.boards, ...Object.fromEntries(files.filter((f) => b.boards[f]).map((f) => [f, { ...b.boards[f], page: res.id }])) } }), strings.history.pageFromGroup);
+                      setPage(res.id);
+                    },
+                  },
+                ],
+              })
+            }
             onBoardMenu={(f, at) => {
               if (!selected.includes(f)) select([f]);
               setMenu({ x: at.clientX, y: at.clientY, title: board.boards[f]?.title ?? f, items: boardMenuItems(f) });

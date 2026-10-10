@@ -104,9 +104,11 @@ kbd {
 .tb-center > * { min-width: 0; }
 .app-title { flex: 0 1 auto; }
 .tb-label { white-space: nowrap; }
-.tb-shapes-compact { display: none; width: auto; padding: 0 4px; gap: 0; }
+.tb-shapes-compact, .tb-tools-compact { display: none; width: auto; padding: 0 4px; gap: 0; }
 @media (max-width: 1100px) { .tb-label { display: none; } .new-board { padding: 0 4px; } }
 @media (max-width: 900px) { .tool-group.tb-shapes-full { display: none; } .tb-shapes-compact { display: inline-flex; } }
+/* Phones: one Tools menu instead of two rows of icons */
+@media (max-width: 480px) { .tool-group.tb-tools-full, .tb-shapes-compact { display: none; } .tb-tools-compact { display: inline-flex; } .new-board span { display: none; } }
 .menu-check { width: 16px; display: inline-flex; color: var(--accent); visibility: hidden; }
 .menu-check.on { visibility: visible; }
 .app-title { font-size: 13px; font-weight: 500; color: var(--muted); margin-right: 4px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
@@ -242,6 +244,9 @@ kbd {
 .inspector .warn { margin: 0; white-space: normal; }
 .inspector textarea { width: 100%; min-height: 56px; resize: vertical; border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 8px; background: var(--panel); }
 .inspector .sec-head { padding: 0; height: 24px; }
+.agent-pick { display: inline-flex; align-items: center; gap: 6px; }
+.agent-name { font-weight: 600; }
+.new-chat { width: auto; padding: 0 8px; gap: 4px; font-size: 12px; white-space: nowrap; }
 .shot-link { margin-left: auto; color: var(--muted); }
 /* Collapsible sections: closed by default, remembered per section */
 .inspector section.collapsible { gap: 0; padding-bottom: 8px; margin-bottom: 8px; }

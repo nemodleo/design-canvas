@@ -87,6 +87,8 @@ export type Board = {
   shapes?: Record<string, Shape>;
   guides?: Record<string, LayoutGuide[]>;
   launch?: Launch;
+  /** Display names for file-prefix groups in the board list (SCR → "Screens") */
+  groupNames?: Record<string, string>;
 };
 
 export type BoardResponse = { board: Board; files: string[]; missing: string[]; dir: string };
