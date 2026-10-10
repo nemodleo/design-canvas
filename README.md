@@ -183,7 +183,7 @@ npm run demo         # run the repo's demo from source
 | `app/` | Canvas UI (Vite + React + TypeScript); all UI text lives in `app/src/strings.ts` |
 | `test/` | `node --test` unit tests and Playwright e2e tests |
 
-Easel was called **design-canvas** until October 2026 (old links redirect here). It started as `tools/design-canvas` inside a [team project](https://github.com/snuhcs-course/swpp-2026-project-team-06) and moved here with its history. The original plan is in [PLAN.md](PLAN.md), a feature-by-feature comparison with Claude Design is in [PARITY.md](PARITY.md), and the work log is in [tasks.md](tasks.md).
+Background reading: the original plan is in [PLAN.md](PLAN.md), a feature-by-feature comparison with Claude Design is in [PARITY.md](PARITY.md), and the work log is in [tasks.md](tasks.md).
 
 Contributions are welcome: open an issue or a pull request.
 
