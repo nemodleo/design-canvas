@@ -970,6 +970,41 @@ export function App() {
     const t = window.setTimeout(run, 600);
     return () => window.clearTimeout(t);
   }, [lintTarget, frameTick, reloadKeys[lintTarget ?? ""], tokens?.minTarget, view.zoom >= 0.25]);
+  /** Compact shapes picker for narrow windows */
+  const shapesMenu = (at: { clientX: number; clientY: number }) =>
+    setMenu({
+      x: at.clientX,
+      y: at.clientY,
+      title: strings.toolbar.shapes,
+      items: [
+        ...TOOLS.slice(5).map((t) => ({ label: t.label, icon: t.icon, shortcut: t.key, check: tool === t.id, run: () => setTool(t.id) })),
+        "sep" as const,
+        { label: strings.toolbar.insertImage, icon: "image" as IconName, run: () => setPicker(() => (a: Asset) => { setPicker(null); addImageShape(a); }) },
+      ],
+    });
+
+  /** "View" menu: toggles and settings that don't need a toolbar button of their own */
+  const viewMenu = (at: { clientX: number; clientY: number }) => {
+    const themeNames = tokens ? Object.keys(tokens.themes) : [];
+    setMenu({
+      x: Math.max(8, at.clientX - 240), // right-aligned under the button; ContextMenu clamps to the window
+      y: at.clientY,
+      title: strings.toolbar.viewMenu,
+      items: [
+        { label: strings.toolbar.guides, icon: "grid", shortcut: "⌃G", check: guidesOn, run: () => setGuidesOn((v) => !v) },
+        { label: strings.toolbar.minimap, icon: "map", shortcut: "M", check: minimapOpen, run: () => setMinimapOpen((v) => !v) },
+        { label: strings.toolbar.leftPanel, icon: "panel", shortcut: `${mod}\\`, check: leftOpen, run: () => setLeftOpen((v) => !v) },
+        "sep",
+        { label: strings.toolbar.appearance(theme), icon: theme === "system" ? "system" : theme === "light" ? "sun" : "moon", run: () => setTheme((t) => (t === "system" ? "light" : t === "light" ? "dark" : "system")) },
+        ...(themeNames.length > 1
+          ? themeNames.map((n) => ({ label: strings.toolbar.themeOption(n), icon: "layers" as IconName, check: tokens!.active === n, run: () => void saveTokens({ ...tokens!, active: n }, strings.history.changeTheme) }))
+          : []),
+        "sep",
+        { label: strings.toolbar.snapshot, icon: "layers", run: () => void snapshotMenu(at) },
+      ],
+    });
+  };
+
   const snapshotMenu = async (at: { clientX: number; clientY: number }) => {
     const s = await api.get<{ git: boolean; branch?: string; changed: number; snapshots: { hash: string; author: string; when: string; subject: string }[] }>("/api/snapshots").catch(() => null);
     if (!s?.git) return setMenu({ x: at.clientX, y: at.clientY, title: strings.menu.snapshot, items: [{ label: strings.menu.notGit, disabled: true, run: () => {} }] });
@@ -1035,8 +1070,8 @@ export function App() {
     if (cmd && e.key === "[" && selected.length) return run(() => reorder(selected, "back"));
     if (cmd && e.key === "0") return run(() => zoomTo(1));
     if (cmd && e.key === "1") return run(fitAll);
-    if (cmd && (e.key === "=" || e.key === "+")) return run(() => zoomBy(1.25));
-    if (cmd && e.key === "-") return run(() => zoomBy(0.8));
+    if (cmd && (e.key === "=" || e.key === "+")) return run(() => zoomBy(1.5));
+    if (cmd && e.key === "-") return run(() => zoomBy(1 / 1.5));
     if (cmd && e.key === "\\") return run(() => toggleUi());
     if (e.ctrlKey && !e.metaKey && k === "g") return run(() => setGuidesOn((v) => !v));
     if (cmd && k === "g" && editFile && edit.state.paths.length >= 2) return run(() => void wrapSelected("flex"));
@@ -1225,62 +1260,54 @@ export function App() {
   return (
     <div className="app">
       <header className="toolbar" role="toolbar" aria-label={strings.toolbar.aria}>
-        <button className={`icon-btn ${leftOpen ? "on" : ""}`} aria-label={strings.toolbar.leftPanel} aria-pressed={leftOpen} title={strings.toolbar.leftPanelTitle(mod)} onClick={() => setLeftOpen((v) => !v)}>
-          <Icon name="panel" style={{ transform: "scaleX(-1)" }} />
-        </button>
-        <strong className="app-title">{board.title}</strong>
-        <div className="tool-group" role="radiogroup" aria-label={strings.toolbar.canvasTools}>
-          {TOOLS.slice(0, 5).map((t) => (
-            <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.tool(t.label, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile && t.id !== "select" && t.id !== "hand"} onClick={() => setTool(t.id)}>
-              <Icon name={t.icon} />
+        <div className="tb-zone tb-left">
+          <button className={`icon-btn ${leftOpen ? "on" : ""}`} aria-label={strings.toolbar.leftPanel} aria-pressed={leftOpen} title={strings.toolbar.leftPanelTitle(mod)} onClick={() => setLeftOpen((v) => !v)}>
+            <Icon name="panel" style={{ transform: "scaleX(-1)" }} />
+          </button>
+          <div className="tool-group" role="radiogroup" aria-label={strings.toolbar.canvasTools}>
+            {TOOLS.slice(0, 5).map((t) => (
+              <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.tool(t.label, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile && t.id !== "select" && t.id !== "hand"} onClick={() => setTool(t.id)}>
+                <Icon name={t.icon} />
+              </button>
+            ))}
+          </div>
+          <button className={`icon-btn tb-shapes-compact ${SHAPE_TOOLS.includes(tool) ? "on" : ""}`} aria-label={strings.toolbar.shapes} aria-haspopup="menu" title={strings.toolbar.shapes} disabled={!!editFile} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); shapesMenu({ clientX: r.left, clientY: r.bottom + 4 }); }}>
+            <Icon name={TOOLS.find((t) => t.id === tool && SHAPE_TOOLS.includes(t.id))?.icon ?? "rect"} />
+            <Icon name="chevronDown" size={12} />
+          </button>
+          <div className="tool-group tb-shapes-full" role="radiogroup" aria-label={strings.toolbar.shapes}>
+            {TOOLS.slice(5).map((t) => (
+              <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.shapeToolTitle(t.label, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile} onClick={() => setTool(t.id)}>
+                <Icon name={t.icon} />
+              </button>
+            ))}
+            <button className="icon-btn" aria-label={strings.toolbar.insertImage} title={strings.toolbar.insertImageTitle} disabled={!!editFile} onClick={() => setPicker(() => (a: Asset) => { setPicker(null); addImageShape(a); })}>
+              <Icon name="image" />
             </button>
-          ))}
-        </div>
-        <div className="tool-group" role="radiogroup" aria-label={strings.toolbar.shapes}>
-          {TOOLS.slice(5).map((t) => (
-            <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.shapeToolTitle(t.label, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile} onClick={() => setTool(t.id)}>
-              <Icon name={t.icon} />
+          </div>
+          <div className="tool-group">
+            <button className="icon-btn" aria-label={strings.toolbar.undo} title={strings.toolbar.undoTitle(hist.undo.length ? hist.undo[hist.undo.length - 1] : undefined, mod)} disabled={!hist.canUndo} onClick={() => void undoRedo("undo")}>
+              <Icon name="undo" />
             </button>
-          ))}
-          <button className="icon-btn" aria-label={strings.toolbar.insertImage} title={strings.toolbar.insertImageTitle} disabled={!!editFile} onClick={() => setPicker(() => (a: Asset) => { setPicker(null); addImageShape(a); })}>
-            <Icon name="image" />
+            <button className="icon-btn" aria-label={strings.toolbar.redo} title={strings.toolbar.redoTitle(hist.redo.length ? hist.redo[hist.redo.length - 1] : undefined, mod)} disabled={!hist.canRedo} onClick={() => void undoRedo("redo")}>
+              <Icon name="redo" />
+            </button>
+          </div>
+          <button className="new-board" aria-haspopup="menu" title={strings.toolbar.newBoardTitle} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); templateMenu({ clientX: r.left, clientY: r.bottom + 4 }); }}>
+            <Icon name="plus" size={16} /> <span className="tb-label">{strings.toolbar.newBoard}</span> <Icon name="chevronDown" size={14} />
           </button>
         </div>
-        <div className="tool-group">
-          <button className="icon-btn" aria-label={strings.toolbar.undo} title={strings.toolbar.undoTitle(hist.undo.length ? hist.undo[hist.undo.length - 1] : undefined, mod)} disabled={!hist.canUndo} onClick={() => void undoRedo("undo")}>
-            <Icon name="undo" />
-          </button>
-          <button className="icon-btn" aria-label={strings.toolbar.redo} title={strings.toolbar.redoTitle(hist.redo.length ? hist.redo[hist.redo.length - 1] : undefined, mod)} disabled={!hist.canRedo} onClick={() => void undoRedo("redo")}>
-            <Icon name="redo" />
-          </button>
-        </div>
-        <button className="new-board" aria-haspopup="menu" title={strings.toolbar.newBoardTitle} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); templateMenu({ clientX: r.left, clientY: r.bottom + 4 }); }}>
-          <Icon name="plus" size={16} /> {strings.toolbar.newBoard} <Icon name="chevronDown" size={14} />
-        </button>
-        {editFile && (
-          <span className="editing-chip">
-            <Icon name="edit" size={14} /> {strings.toolbar.editing(board.boards[editFile]?.title ?? editFile)}
-            <button className="icon-btn sm" aria-label={strings.toolbar.stopEditing} title={strings.toolbar.stopEditingTitle} onClick={() => setEditFile(null)}>
-              <Icon name="close" size={14} />
-            </button>
-          </span>
-        )}
-        <div className="spacer" />
-        {tokens && Object.keys(tokens.themes).length > 0 && (
-          <label className="theme-pick" title={strings.toolbar.themeTitle}>
-            <span className="sr-only">{strings.toolbar.theme}</span>
-            <select value={tokens.active} aria-label={strings.toolbar.theme} onChange={(e) => void saveTokens({ ...tokens, active: e.target.value }, strings.history.changeTheme)}>
-              {Object.keys(tokens.themes).map((n) => (
-                <option key={n} value={n}>
-                  {strings.toolbar.themeOption(n)}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <button className="icon-btn" aria-label={strings.toolbar.snapshot} title={strings.toolbar.snapshotTitle} aria-haspopup="menu" onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); void snapshotMenu({ clientX: r.left, clientY: r.bottom + 4 }); }}>
-          <Icon name="layers" />
-        </button>
+        <div className="tb-zone tb-center">
+          {editFile ? (
+            <span className="editing-chip">
+              <Icon name="edit" size={14} /> {strings.toolbar.editing(board.boards[editFile]?.title ?? editFile)}
+              <button className="icon-btn sm" aria-label={strings.toolbar.stopEditing} title={strings.toolbar.stopEditingTitle} onClick={() => setEditFile(null)}>
+                <Icon name="close" size={14} />
+              </button>
+            </span>
+          ) : (
+            <strong className="app-title" title={board.title}>{board.title}</strong>
+          )}
         {erroredFiles.length > 0 && (
           <button
             className="err-chip"
@@ -1320,37 +1347,31 @@ export function App() {
             <Icon name="warn" size={14} /> {strings.toolbar.errors(erroredFiles.length)}
           </button>
         )}
-        {error && <span className="warn">{error}</span>}
-        <div className="tool-group">
-          <button className="icon-btn" aria-label={strings.toolbar.zoomOut} title={strings.toolbar.zoomOutTitle(mod)} onClick={() => zoomBy(0.8)}>
-            <span className="glyph">−</span>
-          </button>
-          <button className="zoom" aria-label={strings.toolbar.zoom100} title={strings.toolbar.zoom100Title(mod)} onClick={() => zoomTo(1)}>
-            {Math.round(view.zoom * 100)}%
-          </button>
-          <button className="icon-btn" aria-label={strings.toolbar.zoomIn} title={strings.toolbar.zoomInTitle(mod)} onClick={() => zoomBy(1.25)}>
-            <Icon name="plus" />
-          </button>
-          <button className="icon-btn" aria-label={strings.toolbar.fitAll} title={strings.toolbar.fitAllTitle} onClick={fitAll}>
-            <Icon name="fit" />
-          </button>
-          <button className={`icon-btn ${rightTab === "chat" ? "on" : ""}`} aria-label={strings.toolbar.aiChat} aria-pressed={rightTab === "chat"} title={strings.toolbar.aiChatTitle(mod)} onClick={() => (rightTab === "chat" ? setRightTab("inspect") : openChat())}>
-            <Icon name="comment" />
-          </button>
-          <button className={`icon-btn ${guidesOn ? "on" : ""}`} aria-label={strings.toolbar.guides} aria-pressed={guidesOn} title={strings.toolbar.guidesTitle} onClick={() => setGuidesOn((v) => !v)}>
-            <Icon name="grid" />
-          </button>
-          <button
-            className="icon-btn"
-            aria-label={strings.toolbar.appearance(theme)}
-            title={strings.toolbar.appearanceTitle(theme)}
-            onClick={() => setTheme((t) => (t === "system" ? "light" : t === "light" ? "dark" : "system"))}
-          >
-            <Icon name={theme === "system" ? "system" : theme === "light" ? "sun" : "moon"} />
-          </button>
-          <button className={`icon-btn ${minimapOpen ? "on" : ""}`} aria-label={strings.toolbar.minimap} aria-pressed={minimapOpen} title={strings.toolbar.minimapTitle} onClick={() => setMinimapOpen((v) => !v)}>
-            <Icon name="map" />
-          </button>
+          {error && <span className="warn">{error}</span>}
+        </div>
+        <div className="tb-zone tb-right">
+          <div className="tool-group">
+            <button className="icon-btn" aria-label={strings.toolbar.zoomOut} title={strings.toolbar.zoomOutTitle(mod)} onClick={() => zoomBy(1 / 1.5)}>
+              <span className="glyph">−</span>
+            </button>
+            <button className="zoom" aria-label={strings.toolbar.zoom100} title={strings.toolbar.zoom100Title(mod)} onClick={() => zoomTo(1)}>
+              {Math.round(view.zoom * 100)}%
+            </button>
+            <button className="icon-btn" aria-label={strings.toolbar.zoomIn} title={strings.toolbar.zoomInTitle(mod)} onClick={() => zoomBy(1.5)}>
+              <Icon name="plus" />
+            </button>
+            <button className="icon-btn" aria-label={strings.toolbar.fitAll} title={strings.toolbar.fitAllTitle} onClick={fitAll}>
+              <Icon name="fit" />
+            </button>
+          </div>
+          <div className="tool-group">
+            <button className={`icon-btn ${rightTab === "chat" ? "on" : ""}`} aria-label={strings.toolbar.aiChat} aria-pressed={rightTab === "chat"} title={strings.toolbar.aiChatTitle(mod)} onClick={() => (rightTab === "chat" ? setRightTab("inspect") : openChat())}>
+              <Icon name="comment" />
+            </button>
+            <button className="icon-btn" aria-label={strings.toolbar.viewMenu} aria-haspopup="menu" title={strings.toolbar.viewMenuTitle} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); viewMenu({ clientX: r.right, clientY: r.bottom + 4 }); }}>
+              <Icon name="more" />
+            </button>
+          </div>
         </div>
       </header>
       <div className="main">

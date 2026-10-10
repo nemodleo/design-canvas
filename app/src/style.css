@@ -82,9 +82,22 @@ kbd {
 
 .app { display: flex; flex-direction: column; height: 100%; }
 .toolbar {
-  height: 48px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px;
+  min-height: 48px; flex: none; display: flex; align-items: center; gap: 8px; padding: 4px 8px; flex-wrap: wrap;
   background: var(--panel); border-bottom: 1px solid var(--line); z-index: 10;
 }
+/* Three zones: tools left, status center, view right. The center shrinks first; zones wrap onto a second row only when even that is too narrow */
+.tb-zone { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tb-left, .tb-right { flex: none; }
+/* The center (title, editing chip, errors) gives way first: it can shrink to zero width and never forces a wrap */
+.tb-center { flex: 1 1 0; min-width: 0; justify-content: center; overflow: hidden; }
+.tb-center > * { min-width: 0; }
+.app-title { flex: 0 1 auto; }
+.tb-label { white-space: nowrap; }
+.tb-shapes-compact { display: none; width: auto; padding: 0 4px; gap: 0; }
+@media (max-width: 1100px) { .tb-label { display: none; } .new-board { padding: 0 4px; } }
+@media (max-width: 900px) { .tool-group.tb-shapes-full { display: none; } .tb-shapes-compact { display: inline-flex; } }
+.menu-check { width: 16px; display: inline-flex; color: var(--accent); visibility: hidden; }
+.menu-check.on { visibility: visible; }
 .app-title { font-size: 14px; margin-right: 4px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 .tool-group { display: flex; align-items: center; gap: 2px; padding: 0 4px; border-left: 1px solid var(--line); }
 .tool-group:first-of-type { border-left: 0; }
@@ -306,11 +319,9 @@ button.link:hover:not(:disabled) { background: none; text-decoration: underline;
   .left { left: 0; }
   .right { right: 0; }
   .right:has(.inspector-empty) { display: none; }
-  .app-title { display: none; }
 }
 @media (max-width: 1000px), (max-height: 640px) {
   .minimap { transform: scale(0.6); transform-origin: 0 100%; }
-  .toolbar { overflow-x: auto; scrollbar-width: none; }
   .toolbar .warn { display: none; }
 }
 

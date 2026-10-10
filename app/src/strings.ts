@@ -86,6 +86,8 @@ export const strings = {
       `Appearance: ${mode === "system" ? "Follow system" : mode === "light" ? "Light" : "Dark"} (click to change)`,
     minimap: "Minimap",
     minimapTitle: "Minimap (M)",
+    viewMenu: "View",
+    viewMenuTitle: "View: guides, minimap, appearance, theme, snapshot",
   },
 
   tabs: {

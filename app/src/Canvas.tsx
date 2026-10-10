@@ -82,7 +82,7 @@ export function Canvas(p: Props) {
       const my = e.clientY - r.top;
       if (e.ctrlKey || e.metaKey) {
         p.setView((v) => {
-          const z = clamp(v.zoom * Math.exp(-e.deltaY * 0.0025), MIN_ZOOM, MAX_ZOOM);
+          const z = clamp(v.zoom * Math.exp(-e.deltaY * 0.005), MIN_ZOOM, MAX_ZOOM);
           const wx = (mx - v.x) / v.zoom;
           const wy = (my - v.y) / v.zoom;
           return { zoom: z, x: mx - wx * z, y: my - wy * z };

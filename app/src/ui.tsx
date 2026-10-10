@@ -45,7 +45,7 @@ export function ToastHost({ children }: { children: ReactNode }) {
 }
 
 /* ---------------- Context menu ---------------- */
-export type MenuItem = { label: string; icon?: IconName; shortcut?: string; disabled?: boolean; danger?: boolean; run: () => void } | "sep";
+export type MenuItem = { label: string; icon?: IconName; shortcut?: string; disabled?: boolean; danger?: boolean; /** Toggle state shown as a check mark */ check?: boolean; run: () => void } | "sep";
 export type MenuState = { x: number; y: number; items: MenuItem[]; title?: string } | null;
 
 export function ContextMenu({ menu, onClose }: { menu: MenuState; onClose: () => void }) {
@@ -106,7 +106,8 @@ export function ContextMenu({ menu, onClose }: { menu: MenuState; onClose: () =>
         ) : (
           <button
             key={i}
-            role="menuitem"
+            role={it.check === undefined ? "menuitem" : "menuitemcheckbox"}
+            aria-checked={it.check === undefined ? undefined : it.check}
             className={`menu-item ${active === i ? "active" : ""} ${it.danger ? "danger" : ""}`}
             disabled={it.disabled}
             onMouseEnter={() => setActive(i)}
@@ -117,6 +118,7 @@ export function ContextMenu({ menu, onClose }: { menu: MenuState; onClose: () =>
           >
             <span className="menu-icon">{it.icon && <Icon name={it.icon} size={16} />}</span>
             <span className="menu-label">{it.label}</span>
+            {it.check !== undefined && <span className={`menu-check ${it.check ? "on" : ""}`} aria-hidden="true"><Icon name="check" size={14} /></span>}
             {it.shortcut && <kbd>{it.shortcut}</kbd>}
           </button>
         ),
