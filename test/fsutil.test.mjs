@@ -14,7 +14,13 @@ test("atomic write: replaces content and keeps mode without leaving temp files",
   await fs.chmod(f, 0o640);
   await writeAtomic(f, "new");
   assert.equal(await fs.readFile(f, "utf8"), "new");
-  assert.equal((await fs.stat(f)).mode & 0o777, 0o640);
+  if (process.platform === "win32") {
+    // NTFS has no POSIX mode bits (Node's chmod only toggles the readonly flag),
+    // so 0o640 can never stick — assert the file stays writable instead.
+    assert.equal((await fs.stat(f)).mode & 0o200, 0o200, "owner-write bit stays set");
+  } else {
+    assert.equal((await fs.stat(f)).mode & 0o777, 0o640);
+  }
   assert.deepEqual((await fs.readdir(dir)).filter((n) => n.startsWith(".dc-tmp")), []);
 });
 
