@@ -509,7 +509,7 @@ export function App() {
   }, [firstRunHint]);
   const select = (files: string[], m: "replace" | "toggle" | "add" = "replace") => {
     setSelected((cur) => (m === "replace" ? files : m === "add" ? [...new Set([...cur, ...files])] : files.reduce((a, f) => (a.includes(f) ? a.filter((x) => x !== f) : [...a, f]), cur)));
-    if (files.length) setSelectedNotes([]);
+    if (files.length && m === "replace") setSelectedNotes([]);
     setSelectedShape(null);
   };
   const pageField = () => (pages.length && currentPage ? { page: currentPage } : {});
@@ -626,11 +626,13 @@ export function App() {
       for (const k of Object.keys(it) as (keyof BoardItem)[]) if (it[k] === undefined) delete it[k];
       return { ...b, boards: { ...b.boards, [file]: it } };
     }, label);
-  const nudge = (dx: number, dy: number) =>
-    update(
-      (b) => ({ ...b, boards: { ...b.boards, ...Object.fromEntries(selected.map((f) => [f, { ...b.boards[f], x: b.boards[f].x + dx, y: b.boards[f].y + dy }])) } }),
-      strings.history.moveBoard,
-    );
+  /** Shift the selected boards and notes together by (dx, dy) */
+  const shifted = (b: Board, dx: number, dy: number, files = selected, notes = selectedNotes): Board => ({
+    ...b,
+    boards: { ...b.boards, ...Object.fromEntries(files.filter((f) => b.boards[f]).map((f) => [f, { ...b.boards[f], x: b.boards[f].x + dx, y: b.boards[f].y + dy, autoPlaced: undefined }])) },
+    notes: { ...b.notes, ...Object.fromEntries(notes.filter((id) => b.notes[id]).map((id) => [id, { ...b.notes[id], x: b.notes[id].x + dx, y: b.notes[id].y + dy }])) },
+  });
+  const nudge = (dx: number, dy: number) => update((b) => shifted(b, dx, dy), selected.length ? strings.history.moveBoard : strings.history.moveNote);
 
   /* ---------- Notes ---------- */
   const newNoteId = () => {
@@ -1163,8 +1165,12 @@ export function App() {
           }
         });
       }
-      if (selectedNotes.length) return run(() => deleteNotes(selectedNotes));
-      if (selected.length && !editFile) return run(() => void deleteBoards(selected));
+      if (selectedNotes.length || (selected.length && !editFile)) {
+        return run(() => {
+          if (selectedNotes.length) deleteNotes(selectedNotes);
+          if (selected.length && !editFile) void deleteBoards(selected);
+        });
+      }
       return;
     }
     // Arrows while editing: move selection to sibling, parent or child; Alt+↑↓ reorders among siblings
@@ -1188,14 +1194,13 @@ export function App() {
       }
       return run(() => {});
     }
-    if (e.key.startsWith("Arrow") && !editFile && (selectedShape || selectedNotes.length)) {
+    if (e.key.startsWith("Arrow") && !editFile && selectedShape) {
       const d = e.altKey ? 100 : e.shiftKey ? 10 : 1;
       const dx = e.key === "ArrowLeft" ? -d : e.key === "ArrowRight" ? d : 0;
       const dy = e.key === "ArrowUp" ? -d : e.key === "ArrowDown" ? d : 0;
-      if (selectedShape) return run(() => patchShape(selectedShape, { x: shapes[selectedShape].x + dx, y: shapes[selectedShape].y + dy }, strings.history.moveShape));
-      return run(() => update((b) => ({ ...b, notes: { ...b.notes, ...Object.fromEntries(selectedNotes.filter((id) => b.notes[id]).map((id) => [id, { ...b.notes[id], x: b.notes[id].x + dx, y: b.notes[id].y + dy }])) } }), strings.history.moveNote));
+      return run(() => patchShape(selectedShape, { x: shapes[selectedShape].x + dx, y: shapes[selectedShape].y + dy }, strings.history.moveShape));
     }
-    if (e.key.startsWith("Arrow") && selected.length && !editFile) {
+    if (e.key.startsWith("Arrow") && (selected.length || selectedNotes.length) && !editFile) {
       const d = e.altKey ? 100 : e.shiftKey ? 10 : 1;
       return run(() => nudge(e.key === "ArrowLeft" ? -d : e.key === "ArrowRight" ? d : 0, e.key === "ArrowUp" ? -d : e.key === "ArrowDown" ? d : 0));
     }
@@ -1486,7 +1491,7 @@ export function App() {
             onSelectNote={(id, add) => {
               if (!id) return setSelectedNotes([]);
               setSelectedNotes((cur) => (add ? (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]) : [id]));
-              setSelected([]);
+              if (!add) setSelected([]);
               setSelectedShape(null);
             }}
             onMarquee={(hit, additive) => {
@@ -1496,7 +1501,16 @@ export function App() {
             }}
             onMoveBoards={(patches, done) =>
               update(
-                (b) => ({ ...b, boards: { ...b.boards, ...Object.fromEntries(Object.entries(patches).map(([f, p]) => [f, { ...b.boards[f], ...p, autoPlaced: undefined }])) } }),
+                (b) => {
+                  const entries = Object.entries(patches);
+                  const isMove = entries.length > 0 && entries.every(([, p]) => p.w == null && p.h == null && p.x != null && p.y != null);
+                  // A move of selected boards carries the selected notes along by the same amount
+                  const [f0, p0] = entries[0] ?? [];
+                  const dx = isMove && f0 && b.boards[f0] ? p0!.x! - b.boards[f0].x : 0;
+                  const dy = isMove && f0 && b.boards[f0] ? p0!.y! - b.boards[f0].y : 0;
+                  const base = isMove && selectedNotes.length && entries.every(([f]) => selected.includes(f)) ? shifted(b, dx, dy, [], selectedNotes) : b;
+                  return { ...base, boards: { ...base.boards, ...Object.fromEntries(entries.map(([f, p]) => [f, { ...base.boards[f], ...p, autoPlaced: undefined }])) } };
+                },
                 done ? (Object.values(patches).some((p) => p.w != null) ? strings.history.resizeBoard : strings.history.moveBoard) : undefined,
               )
             }
@@ -1506,10 +1520,9 @@ export function App() {
                 // Dragging one note of a multi-selection moves the others by the same amount
                 const dx = patch.x != null ? patch.x - cur.x : 0;
                 const dy = patch.y != null ? patch.y - cur.y : 0;
-                const group = (dx || dy) && !("text" in patch) && selectedNotes.length > 1 && selectedNotes.includes(id) ? selectedNotes : [id];
-                const notes = { ...b.notes };
-                for (const k of group) notes[k] = k === id ? { ...cur, ...patch } : { ...notes[k], x: notes[k].x + dx, y: notes[k].y + dy };
-                return { ...b, notes };
+                const inGroup = (dx || dy) && !("text" in patch) && selectedNotes.includes(id);
+                const base = inGroup ? shifted(b, dx, dy, selected, selectedNotes.filter((k) => k !== id)) : b;
+                return { ...base, notes: { ...base.notes, [id]: { ...cur, ...patch } } };
               }, done ? ("text" in patch ? strings.history.editNote : strings.history.moveNote) : undefined)
             }
             onDeleteNote={(id) => deleteNotes([id])}
