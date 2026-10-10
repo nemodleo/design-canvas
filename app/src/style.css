@@ -109,7 +109,7 @@ kbd {
 @media (max-width: 900px) { .tool-group.tb-shapes-full { display: none; } .tb-shapes-compact { display: inline-flex; } }
 .menu-check { width: 16px; display: inline-flex; color: var(--accent); visibility: hidden; }
 .menu-check.on { visibility: visible; }
-.app-title { font-size: 14px; margin-right: 4px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.app-title { font-size: 13px; font-weight: 500; color: var(--muted); margin-right: 4px; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 .tool-group { display: flex; align-items: center; gap: 2px; padding: 0 4px; border-left: 1px solid var(--line); }
 .tool-group:first-of-type { border-left: 0; }
 .spacer { flex: 1; }
@@ -148,8 +148,11 @@ kbd {
 }
 .board.selected .board-label { color: var(--select); }
 .board-title { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+/* Boards narrower than 48px on screen (zoomed far out) drop their text so the overview is not a wall of "S…" */
+.board-label.tiny .board-title, .board-label.tiny .board-file, .board-label.tiny .dot { display: none; }
 .board.selected .board-title { color: var(--select); }
-.board-file { overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; font-size: 12px; }
+.board-file { overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; font-size: 12px; opacity: 0; transition: opacity 80ms; }
+.board:hover .board-file, .board.selected .board-file, .board.editing .board-file { opacity: 1; }
 .board-btns { display: flex; gap: 2px; margin-left: auto; flex: none; opacity: 0; transition: opacity 80ms; }
 .board:hover .board-btns, .board.selected .board-btns, .board.editing .board-btns { opacity: 1; }
 .board-btns .icon-btn { background: var(--panel); border-color: var(--line); }
@@ -219,6 +222,7 @@ kbd {
 }
 .minimap svg { display: block; }
 .mm-board { fill: var(--line-strong); }
+.minimap.many .mm-board { opacity: 0.35; }
 .mm-sel { fill: var(--select); }
 .mm-view { fill: color-mix(in srgb, var(--select) 10%, transparent); stroke: var(--select); stroke-width: 1.5; }
 
@@ -236,6 +240,7 @@ kbd {
 .inspector .warn { margin: 0; white-space: normal; }
 .inspector textarea { width: 100%; min-height: 56px; resize: vertical; border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 8px; background: var(--panel); }
 .inspector .sec-head { padding: 0; height: 24px; }
+.shot-link { margin-left: auto; color: var(--muted); }
 /* Collapsible sections: closed by default, remembered per section */
 .inspector section.collapsible { gap: 0; padding-bottom: 8px; margin-bottom: 8px; }
 .collapsible-head { display: flex; align-items: center; min-height: 32px; }
@@ -498,6 +503,9 @@ button.danger { color: var(--warn); }
 .board-thumb.loaded + span { display: none; }
 /* Loading state while a thumbnail is generated: soft tile, title, and a thin progress bar at the bottom */
 .board-placeholder.loading { background: linear-gradient(180deg, #f7f6f3, #efede8); }
+/* Not loaded yet (far from the viewport): hatched so it never reads as an empty screen */
+.board-placeholder.far { background: repeating-linear-gradient(135deg, #f7f6f3 0 14px, #efede8 14px 16px); color: #8a8982; }
+.board-placeholder.far .ph-title::after { content: attr(data-hint); display: block; font-size: 0.75em; font-weight: 400; margin-top: 0.4em; }
 .ph-bar { position: absolute; left: 0; bottom: 0; width: 100%; background: var(--accent-weak); overflow: hidden; }
 .ph-bar::after { content: ""; position: absolute; inset: 0; width: 35%; background: var(--accent); animation: ph-slide 1.2s ease-in-out infinite; }
 .board-thumb.loaded ~ .ph-bar { display: none; }

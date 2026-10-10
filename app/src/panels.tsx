@@ -193,7 +193,7 @@ export function Minimap({ rects, selected, view, size, onJump }: { rects: (Rect 
   };
   return (
     <div
-      className="minimap"
+      className={`minimap ${rects.length > 30 ? "many" : ""}`}
       role="img"
       aria-label={strings.minimap.aria}
       onPointerDown={(e) => {

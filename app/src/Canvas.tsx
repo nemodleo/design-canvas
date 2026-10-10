@@ -366,7 +366,7 @@ function BoardView(props: {
       aria-label={strings.canvas.board(title, !!props.selected, !!props.editing, !!props.playing)}
     >
       <div
-        className="board-label"
+        className={`board-label ${b.w * zoom < 48 ? "tiny" : ""}`}
         style={{ transform: `scale(${1 / zoom})`, width: b.w * zoom }}
         onPointerDown={props.onPointerDownLabel}
         onPointerMove={props.onPointerMoveLabel}
@@ -421,9 +421,9 @@ function BoardView(props: {
         ) : props.live ? (
           <LiveFrame reloadKey={props.reloadKey} iframeRef={props.iframeRef} src={`/screens/${props.file}`} title={title} editing={props.editing || !!props.playing} />
         ) : (
-          <div className={`board-placeholder ${props.near ? "loading" : ""}`} style={{ fontSize: Math.min(64, 14 / zoom) }}>
+          <div className={`board-placeholder ${props.near ? "loading" : "far"}`} style={{ fontSize: Math.min(64, 14 / zoom) }}>
             {props.near && <Thumb file={props.file} v={props.reloadKey} />}
-            <span className="ph-title">{title}</span>
+            <span className="ph-title" data-hint={props.near ? "" : strings.canvas.notLoaded}>{title}</span>
             {props.near && <span className="ph-bar" style={{ height: 3 / Math.max(zoom, 0.05) }} aria-hidden="true" />}
           </div>
         )}

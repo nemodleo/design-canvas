@@ -3,6 +3,7 @@
   "title": "Easel UI",
   "pages": [],
   "boards": {
+    "canvas-light-p0.html": {"x": 0, "y": 3100, "w": 1440, "h": 900, "title": "Canvas · light · P0 proposal"},
     "canvas-light.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "Canvas · light"},
     "canvas-dark.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Canvas · dark"},
     "edit-mode.html": {"x": 0, "y": 1000, "w": 1440, "h": 900, "title": "Edit mode"},
@@ -12,6 +13,7 @@
     "narrow-600.html": {"x": 3040, "y": 0, "w": 600, "h": 700, "title": "Narrow window · 600"}
   },
   "order": [
+    "canvas-light-p0.html",
     "canvas-light.html",
     "canvas-dark.html",
     "edit-mode.html",
@@ -23,6 +25,7 @@
   "notes": {
     "n1": {"kind": "title", "x": 0, "y": -200, "maxW": 1400, "text": "Easel UI"},
     "n3": {"kind": "sticky", "x": 3040, "y": 1000, "w": 360, "text": "Easel drawn in Easel. Edit these boards to redesign the app.\nassets/easel.css holds the chrome styles; app/src/style.css mirrors it.", "color": "blue"},
+    "n4": {"kind": "sticky", "x": 1520, "y": 3100, "w": 360, "text": "P0 proposal (2nd report):\n· Board title in the toolbar is quiet (muted, 500)\n· File names show only on hover/selection\n· Minimap tiles fade past 30 boards\n· Boards not yet loaded are hatched + 'Scroll closer to load'\n· Board screenshot moved to the Comments row\n· Register tokens is a secondary button", "color": "blue"},
     "n2": {"kind": "sticky", "x": 3040, "y": 800, "w": 360, "text": "Under 1000px the panels are drawers. Under 640px the zoom readout and Fit hide so the toolbar stays on one row.", "color": "yellow"}
   },
   "shapes": {},

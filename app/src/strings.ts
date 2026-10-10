@@ -202,6 +202,7 @@ export const strings = {
     editMode: "Edit mode",
     editTitle: "Edit (E · double-click)",
     editPill: "Edit",
+    notLoaded: "Scroll closer to load",
     fileMissing: (file: string) => `File missing · ${file}`,
     playing: "▶ Playing · Esc",
     boardSize: "Board size",
@@ -626,6 +627,7 @@ export const strings = {
     capturing: "Capturing…",
     screenshot: "Screenshot",
     boardScreenshot: "Board screenshot",
+    boardScreenshotTitle: "Save a PNG of this board next to the design folder",
   },
 
   comments: {

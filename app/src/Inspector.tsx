@@ -111,13 +111,6 @@ export function Inspector(props: {
                 </div>
               </div>
             )}
-            {!sel && (
-              <div className="row">
-                <button onClick={takeShot} disabled={busy}>
-                  {busy ? strings.inspector.capturing : strings.inspector.boardScreenshot}
-                </button>
-              </div>
-            )}
             {shot && <p className="muted small">{shot}</p>}
           </section>
           {props.children}
@@ -138,6 +131,11 @@ export function Inspector(props: {
               <button className="link" onClick={props.onAuthor} title={strings.comments.authorTitle}>
                 {strings.comments.author(props.author)}
               </button>
+              {!sel && (
+                <button className="link shot-link" onClick={takeShot} disabled={busy} title={strings.inspector.boardScreenshotTitle}>
+                  {busy ? strings.inspector.capturing : strings.inspector.boardScreenshot}
+                </button>
+              )}
             </div>
             <ul className="comments">
               {list.map((c) => (

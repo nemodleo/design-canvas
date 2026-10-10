@@ -237,7 +237,7 @@ export function TokenPanel({ tokens, onSave }: { tokens: Tokens; onSave: (t: Tok
         <span>{strings.tokens.touchTarget}</span>
         <input type="number" value={t.minTarget} onChange={(e) => setT({ ...t, minTarget: Number(e.target.value) || 48 })} aria-label={strings.tokens.minTouchTarget} />
       </label>
-      <button className="primary" disabled={!dirty} title={strings.tokens.saveTitle} onClick={() => onSave(t, tokens.registered ? strings.history.saveTokens : strings.history.registerTokens)}>
+      <button disabled={!dirty} title={strings.tokens.saveTitle} onClick={() => onSave(t, tokens.registered ? strings.history.saveTokens : strings.history.registerTokens)}>
         {tokens.registered ? strings.tokens.save : strings.tokens.register}
       </button>
       <p className="muted small">
