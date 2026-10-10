@@ -8,6 +8,9 @@ import type { Board, BoardItem, Page, View } from "./types";
 import { strings } from "./strings";
 
 /* ---------------- Left panel ---------------- */
+const GROUP_MIN = 12;
+/** "scr-01-home.html" → "SCR"; files without a letter prefix fall into the "Other" group */
+const prefixOf = (f: string) => /^([a-z]+)[-_]/i.exec(f)?.[1].toUpperCase() ?? "";
 export const LeftPanel = forwardRef<HTMLInputElement, {
   board: Board;
   pages: Page[];
@@ -35,6 +38,49 @@ export const LeftPanel = forwardRef<HTMLInputElement, {
       return !p.pages.length || (b.page ?? firstPage) === p.currentPage;
     });
   }, [q, p.board, p.pages, p.currentPage, firstPage]);
+  // Long lists group by file-name prefix (scr-01 → SCR); groups remember whether they are collapsed
+  const groups = useMemo(() => {
+    if (q.trim() || list.length < GROUP_MIN) return null;
+    const by = new Map<string, string[]>();
+    for (const f of list) {
+      const k = prefixOf(f);
+      if (!by.has(k)) by.set(k, []);
+      by.get(k)!.push(f);
+    }
+    const keys = [...by.keys()].filter((k) => k && by.get(k)!.length >= 2);
+    if (keys.length < 2) return null;
+    const other = list.filter((f) => !keys.includes(prefixOf(f)));
+    return [...keys.map((k) => ({ key: k, label: k, files: by.get(k)! })), ...(other.length ? [{ key: "", label: strings.boardList.otherGroup, files: other }] : [])];
+  }, [list, q]);
+  const [closed, setClosed] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("design-canvas:groups-closed") ?? "{}");
+    } catch {
+      return {};
+    }
+  });
+  const toggleGroup = (k: string) =>
+    setClosed((c) => {
+      const next = { ...c, [k]: !c[k] };
+      try {
+        localStorage.setItem("design-canvas:groups-closed", JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  const row = (f: string) => {
+    const b = p.board.boards[f];
+    return (
+      <li key={f}>
+        <button className={`row ${p.selected.includes(f) ? "on" : ""}`} onClick={(e) => p.onPick(f, e.shiftKey || e.metaKey)} onContextMenu={(e) => { e.preventDefault(); p.onBoardMenu(f, e); }} title={f}>
+          <Icon name="board" size={14} />
+          <span className="row-text">{b.title ?? f}</span>
+          {p.missing.includes(f) && <Icon name="warn" size={14} className="warn-icon" aria-label={strings.boardList.fileMissing} />}
+        </button>
+      </li>
+    );
+  };
   return (
     <aside className="left" aria-label={strings.boardList.aria}>
       {p.header}
@@ -101,21 +147,24 @@ export const LeftPanel = forwardRef<HTMLInputElement, {
         </label>
         {list.length === 0 ? (
           <p className="empty">{q ? strings.boardList.noMatch(q) : strings.boardList.emptyPage}</p>
-        ) : (
+        ) : groups ? (
           <ul className="board-list">
-            {list.map((f) => {
-              const b = p.board.boards[f];
+            {groups.map((g) => {
+              const open = !closed[g.key] || g.files.some((f) => p.selected.includes(f));
               return (
-                <li key={f}>
-                  <button className={`row ${p.selected.includes(f) ? "on" : ""}`} onClick={(e) => p.onPick(f, e.shiftKey || e.metaKey)} onContextMenu={(e) => { e.preventDefault(); p.onBoardMenu(f, e); }} title={f}>
-                    <Icon name="board" size={14} />
-                    <span className="row-text">{b.title ?? f}</span>
-                    {p.missing.includes(f) && <Icon name="warn" size={14} className="warn-icon" aria-label={strings.boardList.fileMissing} />}
+                <li key={g.key} className={`group ${open ? "open" : ""}`}>
+                  <button className="row group-head" aria-expanded={open} title={strings.boardList.groupTitle(g.files.length)} onClick={() => toggleGroup(g.key)}>
+                    <Icon name="chevronRight" size={14} className="chev" />
+                    <span className="row-text">{g.label}</span>
+                    <span className="row-count">{g.files.length}</span>
                   </button>
+                  {open && <ul>{g.files.map(row)}</ul>}
                 </li>
               );
             })}
           </ul>
+        ) : (
+          <ul className="board-list">{list.map(row)}</ul>
         )}
       </section>
     </aside>

@@ -43,6 +43,19 @@ export const strings = {
     arrow: "Arrow",
     pen: "Pen",
   },
+  /** Tooltips: what the tool does, as an action */
+  toolHints: {
+    select: "Select and move boards",
+    hand: "Drag to pan the canvas",
+    board: "Drag to draw a board",
+    title: "Click to add a title",
+    sticky: "Click to add a sticky note",
+    rect: "Drag to draw a rectangle",
+    oval: "Drag to draw an oval",
+    line: "Drag to draw a line",
+    arrow: "Drag to draw an arrow",
+    pen: "Drag to draw freehand",
+  },
 
   toolbar: {
     aria: "Tools",
@@ -112,9 +125,11 @@ export const strings = {
     boards: (n: number) => `Boards ${n}`,
     searchPlaceholder: "Find boards (⌘K)",
     search: "Find boards",
-    noMatch: (q: string) => `No boards match "${q}"`,
-    emptyPage: "No boards on this page. Draw one with Board (B) in the toolbar.",
+    noMatch: (q: string) => `No boards match "${q}". Try part of the file name.`,
+    emptyPage: "No boards on this page yet. Press B and drag on the canvas to draw one.",
     fileMissing: "File missing",
+    otherGroup: "Other",
+    groupTitle: (n: number) => `${plural(n, "board", "boards")} · click to collapse or expand`,
   },
 
   minimap: {
@@ -195,7 +210,7 @@ export const strings = {
   },
 
   editMode: {
-    fileChanged: "File changed, select again",
+    fileChanged: "Someone changed this file first. Select the element again.",
   },
 
   elementDrag: {
@@ -591,7 +606,7 @@ export const strings = {
     shotFailed: (msg: string) => `Failed: ${msg}`,
     emptyLead: "Tell the AI what to change, or edit a board yourself.",
     emptyAiCta: "Ask AI (⌘J)",
-    pickBoard: "Select a board to see its options here.",
+    pickBoard: "Pick a board on the canvas to see its options.",
     hintDraw: "Draw board",
     hintTitle: "Title",
     hintNote: "Note",
@@ -600,9 +615,9 @@ export const strings = {
     hintFocus: "Focus view",
     hintRightClick: "Right-click for menu",
     hintFind: "Find boards",
-    editModeHint: "Edit mode · click to select, Shift for several, Esc for parent",
+    editModeHint: "Editing · click an element to select it, Shift-click for several, Esc for its parent",
     kindName: (k: string) => ({ text: "Text", button: "Button", link: "Link", image: "Image", input: "Input", icon: "Icon", container: "Container" } as Record<string, string>)[k] ?? k,
-    viewModeHint: "View mode · double-click to edit",
+    viewModeHint: "Viewing · double-click the board to edit it",
     more: (n: number) => `+${n} more`,
     copy: "Copy",
     copied: "Copied",

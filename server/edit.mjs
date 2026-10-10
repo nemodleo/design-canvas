@@ -16,8 +16,8 @@ const splice = (html, start, end, text) => html.slice(0, start) + text + html.sl
 /** Finds the target element and checks its hash. A mismatch means someone else or an AI edited the file in the meantime */
 function target(html, path, hash) {
   const info = inspect(html, path);
-  if (!info) throw new EditError(409, "Element not found (the file changed, select again)");
-  if (hash && info.hash !== hash) throw new EditError(409, "The file changed, select again");
+  if (!info) throw new EditError(409, "That element is gone. Someone changed the file first; select it again");
+  if (hash && info.hash !== hash) throw new EditError(409, "Someone changed this file first. Select the element again");
   return info;
 }
 

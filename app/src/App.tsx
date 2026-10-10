@@ -42,17 +42,17 @@ const TEMPLATES = [
   { id: "doc", label: strings.templates.doc, size: "800×1000", w: 800, h: 1000 },
 ] as const;
 
-const TOOLS: { id: Tool; icon: IconName; label: string; key: string }[] = [
-  { id: "select", icon: "select", label: strings.tools.select, key: "V" },
-  { id: "hand", icon: "hand", label: strings.tools.hand, key: "H" },
-  { id: "board", icon: "board", label: strings.tools.board, key: "B" },
-  { id: "title", icon: "title", label: strings.tools.title, key: "T" },
-  { id: "sticky", icon: "sticky", label: strings.tools.sticky, key: "N" },
-  { id: "rect", icon: "rect", label: strings.tools.rect, key: "R" },
-  { id: "oval", icon: "oval", label: strings.tools.oval, key: "O" },
-  { id: "line", icon: "line", label: strings.tools.line, key: "L" },
-  { id: "arrow", icon: "arrow", label: strings.tools.arrow, key: "A" },
-  { id: "pen", icon: "pen", label: strings.tools.pen, key: "P" },
+const TOOLS: { id: Tool; icon: IconName; label: string; hint: string; key: string }[] = [
+  { id: "select", icon: "select", label: strings.tools.select, hint: strings.toolHints.select, key: "V" },
+  { id: "hand", icon: "hand", label: strings.tools.hand, hint: strings.toolHints.hand, key: "H" },
+  { id: "board", icon: "board", label: strings.tools.board, hint: strings.toolHints.board, key: "B" },
+  { id: "title", icon: "title", label: strings.tools.title, hint: strings.toolHints.title, key: "T" },
+  { id: "sticky", icon: "sticky", label: strings.tools.sticky, hint: strings.toolHints.sticky, key: "N" },
+  { id: "rect", icon: "rect", label: strings.tools.rect, hint: strings.toolHints.rect, key: "R" },
+  { id: "oval", icon: "oval", label: strings.tools.oval, hint: strings.toolHints.oval, key: "O" },
+  { id: "line", icon: "line", label: strings.tools.line, hint: strings.toolHints.line, key: "L" },
+  { id: "arrow", icon: "arrow", label: strings.tools.arrow, hint: strings.toolHints.arrow, key: "A" },
+  { id: "pen", icon: "pen", label: strings.tools.pen, hint: strings.toolHints.pen, key: "P" },
 ];
 const SHAPE_TOOLS: Tool[] = ["rect", "oval", "line", "arrow", "pen"];
 type Theme = "system" | "light" | "dark";
@@ -1293,7 +1293,7 @@ export function App() {
           </button>
           <div className="tool-group" role="radiogroup" aria-label={strings.toolbar.canvasTools}>
             {TOOLS.slice(0, 5).map((t) => (
-              <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.tool(t.label, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile && t.id !== "select" && t.id !== "hand"} onClick={() => setTool(t.id)}>
+              <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.tool(t.hint, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile && t.id !== "select" && t.id !== "hand"} onClick={() => setTool(t.id)}>
                 <Icon name={t.icon} />
               </button>
             ))}
@@ -1304,7 +1304,7 @@ export function App() {
           </button>
           <div className="tool-group tb-shapes-full" role="radiogroup" aria-label={strings.toolbar.shapes}>
             {TOOLS.slice(5).map((t) => (
-              <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.shapeToolTitle(t.label, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile} onClick={() => setTool(t.id)}>
+              <button key={t.id} role="radio" aria-checked={tool === t.id} aria-label={strings.toolbar.tool(t.label, t.key)} title={strings.toolbar.shapeToolTitle(t.hint, t.key)} className={`icon-btn ${tool === t.id ? "on" : ""}`} disabled={!!editFile} onClick={() => setTool(t.id)}>
                 <Icon name={t.icon} />
               </button>
             ))}

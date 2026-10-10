@@ -43,7 +43,7 @@ test("setText: rejects elements with child elements", () => {
 });
 
 test("rejects a mismatched hash (concurrent edit)", () => {
-  assert.throws(() => applyEdit(SRC, { op: "setText", path: "0/1", hash: "deadbeef0000", text: "x" }), /file changed/);
+  assert.throws(() => applyEdit(SRC, { op: "setText", path: "0/1", hash: "deadbeef0000", text: "x" }), /changed this file first/);
 });
 
 test("setStyle: replaces one declaration, keeps quotes and other declarations", () => {
