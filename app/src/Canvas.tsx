@@ -237,7 +237,7 @@ export function Canvas(p: Props) {
   return (
     <div
       ref={rootRef}
-      className={`canvas tool-${panning ? "hand" : p.tool}`}
+      className={`canvas tool-${panning ? "hand" : p.tool} ${p.editFile ? "editing" : ""}`}
       onPointerDown={onBgDown}
       onPointerMove={onBgMove}
       onPointerUp={onBgUp}
@@ -392,8 +392,9 @@ function BoardView(props: {
                 <Icon name="play" size={14} />
               </button>
             )}
-            <button className={`icon-btn sm ${props.editing ? "on" : ""}`} aria-label={strings.canvas.editMode} title={strings.canvas.editTitle} onPointerDown={stop} onClick={(e) => { e.stopPropagation(); props.onEdit(); }}>
+            <button className={`icon-btn sm edit-pill ${props.editing ? "on" : ""}`} aria-label={strings.canvas.editMode} title={strings.canvas.editTitle} onPointerDown={stop} onClick={(e) => { e.stopPropagation(); props.onEdit(); }}>
               <Icon name="edit" size={14} />
+              {b.w * zoom >= 150 && <span className="edit-pill-label">{strings.canvas.editPill}</span>}
             </button>
           </span>
         )}

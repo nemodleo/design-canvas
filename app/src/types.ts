@@ -104,5 +104,8 @@ export type Selection = {
   hash: string;
   styles: Record<string, string>;
   inlineStyle: Record<string, string>;
+  /** Human-readable kind (text, button, link, image, input, icon, container) and label from the server */
+  kind?: string;
+  label?: string;
   rect?: { x: number; y: number; w: number; h: number };
 };

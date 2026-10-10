@@ -93,10 +93,15 @@ export function Inspector(props: {
             {props.error && <p className="warn">{props.error}</p>}
             {sel && sel.file === props.file && (
               <div className="sel">
-                <div>
-                  <code>&lt;{sel.tag}&gt;</code> <code>{sel.path}</code> {props.multi > 1 && <span className="muted">{strings.inspector.more(props.multi - 1)}</span>}
+                <div className="sel-name">
+                  <strong>{strings.inspector.kindName(sel.kind ?? sel.tag)}</strong>
+                  {sel.label && <span className="sel-label"> · {sel.label.slice(0, 40)}</span>}
+                  {props.multi > 1 && <span className="muted"> {strings.inspector.more(props.multi - 1)}</span>}
                 </div>
-                {sel.text && <div className="sel-text">“{sel.text.slice(0, 120)}”</div>}
+                <div className="sel-tech">
+                  <code>&lt;{sel.tag}&gt;</code> <code>{sel.path}</code>
+                </div>
+                {sel.text && !sel.label && <div className="sel-text">“{sel.text.slice(0, 120)}”</div>}
                 <div className="row">
                   <button onClick={copy}>{copied ? strings.inspector.copied : strings.inspector.copy}</button>
                   {sel.path.includes("/") && <button onClick={() => props.onSelectPath(sel.path.slice(0, sel.path.lastIndexOf("/")))}>{strings.inspector.parent}</button>}

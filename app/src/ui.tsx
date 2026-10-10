@@ -206,3 +206,43 @@ export function useDialog() {
   const confirm = (o: { title: string; body: string; ok?: string; danger?: boolean }) => new Promise<boolean>((resolve) => setState({ kind: "confirm", ok: o.ok ?? strings.dialog.ok, ...o, resolve }));
   return { state, close: () => setState(null), prompt, confirm };
 }
+
+/* ---------------- Collapsible section (right panel) ---------------- */
+const openKey = (id: string) => `design-canvas:open:${id}`;
+export function Collapsible({ id, title, count, defaultOpen = false, right, children }: { id: string; title: string; count?: number | string; defaultOpen?: boolean; right?: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem(openKey(id));
+      return v == null ? defaultOpen : v === "1";
+    } catch {
+      return defaultOpen;
+    }
+  });
+  const toggle = () => {
+    setOpen((o) => {
+      try {
+        localStorage.setItem(openKey(id), o ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !o;
+    });
+  };
+  return (
+    <section className={`collapsible ${open ? "open" : ""}`}>
+      <div className="collapsible-head">
+        <button className="collapsible-toggle" aria-expanded={open} aria-controls={`sec-${id}`} onClick={toggle}>
+          <Icon name="chevronRight" size={14} className="chev" />
+          <span className="collapsible-title">{title}</span>
+          {count !== undefined && count !== 0 && count !== "" && <span className="collapsible-count">{count}</span>}
+        </button>
+        {right && <span className="collapsible-right">{right}</span>}
+      </div>
+      {open && (
+        <div className="collapsible-body" id={`sec-${id}`}>
+          {children}
+        </div>
+      )}
+    </section>
+  );
+}

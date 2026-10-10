@@ -16,7 +16,7 @@ import { Layers } from "./Layers";
 import { BoardOptions, FocusView, LeftPanel, Minimap } from "./panels";
 import { Play } from "./Play";
 import { Properties } from "./Properties";
-import { ContextMenu, Dialog, useDialog, useToast, type MenuItem, type MenuState } from "./ui";
+import { ContextMenu, Dialog, useDialog, useToast, type MenuItem, type MenuState, Collapsible } from "./ui";
 import { useEditMode } from "./useEditMode";
 import type { Board, BoardItem, BoardResponse, LayoutGuide, Note, Shape, ShapeKind, Tool, View } from "./types";
 import { strings } from "./strings";
@@ -1615,32 +1615,6 @@ export function App() {
             />
           )}
           {!editFile && one && board.boards[one] && (
-            <TweaksPanel
-              key={`${one}-${reloadKeys[one] ?? 0}-${frameTick}`}
-              doc={readTweaks(frames.current.get(one)?.contentDocument) ? frames.current.get(one)!.contentDocument : null}
-              onSave={async (values) => {
-                try {
-                  await api.post("/api/edit", { file: one, op: "setTweaks", values });
-                  toast({ tone: "ok", text: strings.toast.tweaksSaved, action: undoAction });
-                } catch (e) {
-                  toast({ tone: "error", text: String((e as Error).message) });
-                }
-              }}
-            />
-          )}
-          {lintTarget && board.boards[lintTarget] && (
-            <>
-              <CheckList title={strings.checks.tokenCheck(tokens?.active ?? "")} items={lint} empty={strings.checks.noOffToken} onPick={(p) => pickPath(lintTarget, p)} onAskAI={() => openChat(strings.prompts.fixTokens((lint ?? []).slice(0, 12).map((x) => `- ${x.path ?? strings.prompts.line + x.line}: ${x.message}`).join("\n")), [lintTarget])} />
-              <CheckList title={strings.checks.a11y} items={a11y} empty={strings.checks.a11yOk} onPick={(p) => pickPath(lintTarget, p)} onAskAI={() => openChat(strings.prompts.fixA11y((a11y ?? []).slice(0, 12).map((x) => `- ${x.path}: ${x.message}`).join("\n")), [lintTarget])} />
-            </>
-          )}
-          {!editFile && one && board.boards[one] && (
-            <GuidesEditor
-              guides={board.guides?.[one] ?? []}
-              onChange={(g: LayoutGuide[], label) => update((b) => ({ ...b, guides: { ...(b.guides ?? {}), [one]: g } }), label)}
-            />
-          )}
-          {!editFile && one && board.boards[one] && (
             <BoardOptions
               file={one}
               item={board.boards[one]}
@@ -1656,6 +1630,40 @@ export function App() {
               onDelete={() => void deleteBoards([one])}
               onLaunch={(on) => update((b) => ({ ...b, launch: on ? { view: "focused", file: one } : { view: "canvas" } }), strings.history.launchScreen)}
             />
+          )}
+          {!editFile && one && board.boards[one] && readTweaks(frames.current.get(one)?.contentDocument) && (
+            <Collapsible id="tweaks" title={strings.sections.tweaks}>
+              <TweaksPanel
+              key={`${one}-${reloadKeys[one] ?? 0}-${frameTick}`}
+              doc={readTweaks(frames.current.get(one)?.contentDocument) ? frames.current.get(one)!.contentDocument : null}
+              onSave={async (values) => {
+                try {
+                  await api.post("/api/edit", { file: one, op: "setTweaks", values });
+                  toast({ tone: "ok", text: strings.toast.tweaksSaved, action: undoAction });
+                } catch (e) {
+                  toast({ tone: "error", text: String((e as Error).message) });
+                }
+              }}
+            />
+            </Collapsible>
+          )}
+          {lintTarget && board.boards[lintTarget] && (
+            <>
+              <Collapsible id="token-check" title={strings.sections.tokenCheck} count={lint?.length ?? 0}>
+                <CheckList title={strings.checks.tokenCheck(tokens?.active ?? "")} items={lint} empty={strings.checks.noOffToken} onPick={(p) => pickPath(lintTarget, p)} onAskAI={() => openChat(strings.prompts.fixTokens((lint ?? []).slice(0, 12).map((x) => `- ${x.path ?? strings.prompts.line + x.line}: ${x.message}`).join("\n")), [lintTarget])} />
+              </Collapsible>
+              <Collapsible id="a11y" title={strings.sections.a11y} count={a11y?.length ?? 0}>
+                <CheckList title={strings.checks.a11y} items={a11y} empty={strings.checks.a11yOk} onPick={(p) => pickPath(lintTarget, p)} onAskAI={() => openChat(strings.prompts.fixA11y((a11y ?? []).slice(0, 12).map((x) => `- ${x.path}: ${x.message}`).join("\n")), [lintTarget])} />
+              </Collapsible>
+            </>
+          )}
+          {!editFile && one && board.boards[one] && (
+            <Collapsible id="guides" title={strings.sections.guides} count={(board.guides?.[one] ?? []).length}>
+              <GuidesEditor
+              guides={board.guides?.[one] ?? []}
+              onChange={(g: LayoutGuide[], label) => update((b) => ({ ...b, guides: { ...(b.guides ?? {}), [one]: g } }), label)}
+            />
+            </Collapsible>
           )}
           {!editFile && selected.length > 1 && (
             <section className="board-opts">

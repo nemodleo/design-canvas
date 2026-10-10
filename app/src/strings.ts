@@ -121,6 +121,16 @@ export const strings = {
     aria: "Minimap: click to move there",
   },
 
+  sections: {
+    board: "Board",
+    comments: "Comments",
+    guides: "Layout guides",
+    tweaks: "Tweaks",
+    tokenCheck: "Token check",
+    a11y: "Accessibility",
+    properties: "Properties",
+    layers: "Layers",
+  },
   boardOptions: {
     aria: "Board options",
     heading: "Board",
@@ -175,6 +185,7 @@ export const strings = {
     interactive: "Interactive (Play)",
     editMode: "Edit mode",
     editTitle: "Edit (E · double-click)",
+    editPill: "Edit",
     fileMissing: (file: string) => `File missing · ${file}`,
     playing: "▶ Playing · Esc",
     boardSize: "Board size",
@@ -590,6 +601,7 @@ export const strings = {
     hintRightClick: "Right-click for menu",
     hintFind: "Find boards",
     editModeHint: "Edit mode · click to select, Shift for several, Esc for parent",
+    kindName: (k: string) => ({ text: "Text", button: "Button", link: "Link", image: "Image", input: "Input", icon: "Icon", container: "Container" } as Record<string, string>)[k] ?? k,
     viewModeHint: "View mode · double-click to edit",
     more: (n: number) => `+${n} more`,
     copy: "Copy",
