@@ -1221,6 +1221,7 @@ export function App() {
         {lg.length > 0 && board && <GuidesOverlay guides={lg} w={board.boards[f].w} h={board.boards[f].h} />}
         {editing && edit.state.hover && !edit.state.paths.includes(edit.state.hover.path) && <Box r={edit.state.hover.rect} cls="hover" />}
         {editing && edit.state.rects.map((r, i) => <Box key={i} r={r} cls="sel" />)}
+        {editing && edit.state.marquee && <Box r={edit.state.marquee} cls="marquee-el" />}
         {editing && doc && edit.state.paths.length === 1 && edit.state.rects[0] && (
           <EditHandles
             doc={doc}

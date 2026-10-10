@@ -1,5 +1,5 @@
 // AI-generated with Claude Code, 2026-10-09, reviewed by Hyun Park
-// Edit mode hook: hover outlines inside the iframe, click to select (Shift for several), Esc to select parent, reports selection to the server.
+// Edit mode hook: hover outlines inside the iframe, click to select (Shift for several, drag for a marquee), Esc to select parent, reports selection to the server.
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "./api";
@@ -13,10 +13,12 @@ export type EditState = {
   rects: Rect[];
   selection: Selection | null;
   error: string | null;
+  /** Drag rectangle inside the iframe (client px) while a marquee selection is in progress */
+  marquee: Rect | null;
 };
 
 export function useEditMode(editFile: string | null, getFrame: (f: string) => HTMLIFrameElement | null, hooks?: { onTextEdit?: (el: HTMLElement, path: string) => void; onContext?: (path: string, at: { clientX: number; clientY: number }) => void }) {
-  const [state, setState] = useState<EditState>({ hover: null, paths: [], rects: [], selection: null, error: null });
+  const [state, setState] = useState<EditState>({ hover: null, paths: [], rects: [], selection: null, error: null, marquee: null });
   const pathsRef = useRef<string[]>([]);
   pathsRef.current = state.paths;
   const hooksRef = useRef(hooks);
@@ -64,7 +66,7 @@ export function useEditMode(editFile: string | null, getFrame: (f: string) => HT
 
   // Clear selection when the edited board changes
   useEffect(() => {
-    setState({ hover: null, paths: [], rects: [], selection: null, error: null });
+    setState({ hover: null, paths: [], rects: [], selection: null, error: null, marquee: null });
   }, [editFile]);
 
   // Attach events to the iframe document (again on every load)
@@ -82,16 +84,73 @@ export function useEditMode(editFile: string | null, getFrame: (f: string) => HT
         const t = e.target as Element | null;
         return t && t.nodeType === 1 && t !== doc.body && t !== doc.documentElement ? t : null;
       };
+      // Marquee: press on the page and drag; elements fully inside the rectangle get selected (Shift adds to the selection)
+      let drag: { sx: number; sy: number; additive: boolean; moved: boolean } | null = null;
+      let swallowClick = false;
+      const onDown = (e: MouseEvent) => {
+        if (e.button !== 0 || (e.target as HTMLElement)?.isContentEditable) return;
+        drag = { sx: e.clientX, sy: e.clientY, additive: e.shiftKey, moved: false };
+      };
+      const onUp = (e: MouseEvent) => {
+        const d = drag;
+        drag = null;
+        if (!d?.moved) return;
+        doc.body.style.userSelect = "";
+        doc.getSelection()?.removeAllRanges();
+        e.preventDefault();
+        swallowClick = true;
+        const r = { x: Math.min(d.sx, e.clientX), y: Math.min(d.sy, e.clientY), w: Math.abs(e.clientX - d.sx), h: Math.abs(e.clientY - d.sy) };
+        setState((s) => ({ ...s, marquee: null }));
+        const inside = (el: Element) => {
+          const b = el.getBoundingClientRect();
+          return b.width > 0 && b.height > 0 && b.left >= r.x && b.top >= r.y && b.right <= r.x + r.w && b.bottom <= r.y + r.h;
+        };
+        // Outermost elements fully inside the rectangle (their descendants come along as part of them)
+        const hits: string[] = [];
+        const walk = (el: Element) => {
+          for (const c of Array.from(el.children)) {
+            if (/^(script|style|template)$/i.test(c.tagName)) continue;
+            if (inside(c)) {
+              const p = pathOf(c);
+              if (p != null) hits.push(p);
+            } else walk(c);
+          }
+        };
+        walk(doc.body);
+        const cur = pathsRef.current;
+        void select(d.additive ? [...cur, ...hits.filter((p) => !cur.includes(p))] : hits);
+      };
       const onMove = (e: MouseEvent) => {
+        if (drag) {
+          const dx = e.clientX - drag.sx;
+          const dy = e.clientY - drag.sy;
+          if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+          drag.moved = true;
+          e.preventDefault();
+          doc.body.style.userSelect = "none"; // no native text selection while the marquee is drawn
+          const m = { x: Math.min(drag.sx, e.clientX), y: Math.min(drag.sy, e.clientY), w: Math.abs(dx), h: Math.abs(dy) };
+          setState((s) => ({ ...s, hover: null, marquee: m }));
+          return;
+        }
         const t = target(e);
         const p = t ? pathOf(t) : null;
         setState((s) => (p == null ? { ...s, hover: null } : s.hover?.path === p ? s : { ...s, hover: { path: p, rect: rectOf(t!) } }));
       };
-      const onLeave = () => setState((s) => ({ ...s, hover: null }));
+      // mouseleave reaches a capturing document listener for every element the pointer leaves; only the page itself counts
+      const onLeave = (e: MouseEvent) => {
+        if (e.target !== doc.documentElement) return;
+        drag = null;
+        doc.body.style.userSelect = "";
+        setState((s) => ({ ...s, hover: null, marquee: null }));
+      };
       const onClick = (e: MouseEvent) => {
         // Block links and buttons in edit mode
         e.preventDefault();
         e.stopPropagation();
+        if (swallowClick) {
+          swallowClick = false;
+          return;
+        }
         const t = target(e);
         const p = t ? pathOf(t) : null;
         if (p == null) return;
@@ -132,6 +191,8 @@ export function useEditMode(editFile: string | null, getFrame: (f: string) => HT
         if (/^(Arrow|Delete|Backspace)/.test(e.key) || ((e.metaKey || e.ctrlKey) && /^[zydcvg]$/i.test(e.key))) e.preventDefault();
       };
       const onScroll = () => refresh();
+      doc.addEventListener("mousedown", onDown, true);
+      doc.addEventListener("mouseup", onUp, true);
       doc.addEventListener("mousemove", onMove, true);
       doc.addEventListener("mouseleave", onLeave, true);
       doc.addEventListener("click", onClick, true);
@@ -140,6 +201,8 @@ export function useEditMode(editFile: string | null, getFrame: (f: string) => HT
       doc.addEventListener("keydown", onKey, true);
       win.addEventListener("scroll", onScroll, true);
       detach = () => {
+        doc.removeEventListener("mousedown", onDown, true);
+        doc.removeEventListener("mouseup", onUp, true);
         doc.removeEventListener("mousemove", onMove, true);
         doc.removeEventListener("mouseleave", onLeave, true);
         doc.removeEventListener("click", onClick, true);

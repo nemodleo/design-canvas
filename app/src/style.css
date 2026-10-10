@@ -309,6 +309,7 @@ button.link:hover:not(:disabled) { background: none; text-decoration: underline;
 .box { position: absolute; pointer-events: none; }
 .box.hover { outline: 1px solid var(--select); background: color-mix(in srgb, var(--select) 6%, transparent); }
 .box.sel { outline: 2px solid var(--select); }
+.box.marquee-el { outline: 1px solid var(--select); background: color-mix(in srgb, var(--select) 8%, transparent); }
 .pin {
   position: absolute; width: 24px; height: 24px; border-radius: 12px 12px 12px 2px; background: var(--accent); color: #fff;
   font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; transform-origin: 0 100%;

@@ -617,7 +617,7 @@ export const strings = {
     hintFocus: "Focus view",
     hintRightClick: "Right-click for menu",
     hintFind: "Find boards",
-    editModeHint: "Editing · click an element to select it, Shift-click for several, Esc for its parent",
+    editModeHint: "Editing · click an element to select it, drag or Shift-click for several, Esc for its parent",
     kindName: (k: string) => ({ text: "Text", button: "Button", link: "Link", image: "Image", input: "Input", icon: "Icon", container: "Container" } as Record<string, string>)[k] ?? k,
     viewModeHint: "Viewing · double-click the board to edit it",
     more: (n: number) => `+${n} more`,
