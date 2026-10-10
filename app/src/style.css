@@ -248,7 +248,7 @@ kbd {
 .inspector .sec-head { padding: 0; height: 24px; }
 .agent-pick { display: inline-flex; align-items: center; gap: 6px; }
 .agent-name { font-weight: 600; }
-.new-chat { width: auto; padding: 0 8px; gap: 4px; font-size: 12px; white-space: nowrap; }
+.icon-btn.sm.new-chat { width: auto; padding: 0 8px; gap: 4px; font-size: 12px; white-space: nowrap; }
 .shot-link { margin-left: auto; color: var(--muted); }
 /* Collapsible sections: closed by default, remembered per section */
 .inspector section.collapsible { gap: 0; padding-bottom: 8px; margin-bottom: 8px; }

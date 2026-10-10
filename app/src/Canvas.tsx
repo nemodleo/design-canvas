@@ -628,7 +628,7 @@ function NoteView(props: { id: string; note: Note; zoom: number; selected: boole
       >
         {n.text}
       </div>
-      {props.selected && !editing && (
+      {props.selected && props.zoom >= 0.2 && !editing && (
         <div
           className="note-resize"
           role="slider"
@@ -648,7 +648,7 @@ function NoteView(props: { id: string; note: Note; zoom: number; selected: boole
           onPointerUp={resize.end}
         />
       )}
-      {props.selected && !editing && (
+      {props.selected && !editing && props.zoom >= 0.2 && (
         <button className="note-del icon-btn" aria-label={strings.canvas.deleteNote} style={{ transform: `scale(${1 / props.zoom})` }} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); props.onDelete(); }}>
           <Icon name="close" size={14} />
         </button>
