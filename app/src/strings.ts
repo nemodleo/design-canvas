@@ -20,6 +20,8 @@ export const strings = {
     tokensAside: "Design tokens",
     assetsAside: "Assets",
     announceBoard: (title: string, i: number, n: number) => `${title} selected, ${i}/${n}. Enter to edit`,
+    firstRunEdit: "Double-click a board to edit it in place",
+    firstRunAi: (mod: string) => `Press ${mod}J to ask the AI for a change`,
   },
 
   templates: {
@@ -78,6 +80,7 @@ export const strings = {
     fitAll: "Fit all",
     fitAllTitle: "Fit all (⇧1)",
     aiChat: "AI chat",
+    askAi: "Ask AI",
     aiChatTitle: (mod: string) => `AI chat (${mod}J)`,
     guides: "Show layout guides",
     guidesTitle: "Show layout guides (⌃G)",
@@ -575,6 +578,8 @@ export const strings = {
 
   inspector: {
     shotFailed: (msg: string) => `Failed: ${msg}`,
+    emptyLead: "Tell the AI what to change, or edit a board yourself.",
+    emptyAiCta: "Ask AI (⌘J)",
     pickBoard: "Select a board to see its options here.",
     hintDraw: "Draw board",
     hintTitle: "Title",

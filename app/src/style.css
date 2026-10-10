@@ -447,6 +447,13 @@ button.danger { color: var(--warn); }
 .board-thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0; transition: opacity 160ms; }
 .board-thumb.loaded { opacity: 1; }
 .board-thumb.loaded + span { display: none; }
+/* Loading state while a thumbnail is generated: soft tile, title, and a thin progress bar at the bottom */
+.board-placeholder.loading { background: linear-gradient(180deg, #f7f6f3, #efede8); }
+.ph-bar { position: absolute; left: 0; bottom: 0; width: 100%; background: var(--accent-weak); overflow: hidden; }
+.ph-bar::after { content: ""; position: absolute; inset: 0; width: 35%; background: var(--accent); animation: ph-slide 1.2s ease-in-out infinite; }
+.board-thumb.loaded ~ .ph-bar { display: none; }
+@keyframes ph-slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+@media (prefers-reduced-motion: reduce) { .ph-bar::after { animation: none; width: 100%; opacity: 0.4; } }
 .board.playing .board-frame { box-shadow: 0 0 0 4px var(--ok); }
 .playing-badge { position: absolute; right: 8px; top: 8px; transform-origin: 100% 0; background: var(--ok); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 12px; pointer-events: none; }
 .layer-tree:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
@@ -458,3 +465,22 @@ button.danger { color: var(--warn); }
 .guides-editor .sec-head { gap: 8px; }
 /* Keep toolbar labels on one line */
 .new-board { white-space: nowrap; }
+
+/* Ask AI: the one primary action in the toolbar */
+.ask-ai { height: 32px; padding: 0 12px; gap: 6px; border-radius: 16px; border-color: transparent; background: var(--accent); color: var(--accent-text); font-weight: 600; white-space: nowrap; }
+.ask-ai:hover:not(:disabled) { background: var(--accent); filter: brightness(0.94); border-color: transparent; }
+.ask-ai.on { background: var(--accent-weak); color: var(--accent); }
+.ask-ai.on:hover:not(:disabled) { background: var(--accent-weak); filter: none; }
+.ask-ai-label { white-space: nowrap; }
+@media (max-width: 760px) { .ask-ai-label { display: none; } .ask-ai { width: 32px; padding: 0; border-radius: 16px; } }
+.ask-ai-cta { align-self: flex-start; gap: 6px; margin: 8px 0 16px; }
+.empty-lead { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--text); }
+/* First-run hint: shown once in the canvas, dismissed on the first click or key */
+.first-run {
+  position: absolute; left: 50%; top: 44px; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 6px 20px; max-width: calc(100% - 32px);
+  padding: 10px 16px; border-radius: var(--r-lg); background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow-2); pointer-events: none; opacity: 1;
+}
+@keyframes hint-in { from { opacity: 0; transform: translate(-50%, -6px); } }
+.first-run { animation: hint-in 200ms ease-out; }
+.first-run-line { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); }
+.first-run-line svg { color: var(--accent); }

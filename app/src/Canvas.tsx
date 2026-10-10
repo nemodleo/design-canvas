@@ -420,9 +420,10 @@ function BoardView(props: {
         ) : props.live ? (
           <LiveFrame reloadKey={props.reloadKey} iframeRef={props.iframeRef} src={`/screens/${props.file}`} title={title} editing={props.editing || !!props.playing} />
         ) : (
-          <div className="board-placeholder" style={{ fontSize: Math.min(64, 14 / zoom) }}>
+          <div className={`board-placeholder ${props.near ? "loading" : ""}`} style={{ fontSize: Math.min(64, 14 / zoom) }}>
             {props.near && <Thumb file={props.file} v={props.reloadKey} />}
-            <span>{title}</span>
+            <span className="ph-title">{title}</span>
+            {props.near && <span className="ph-bar" style={{ height: 3 / Math.max(zoom, 0.05) }} aria-hidden="true" />}
           </div>
         )}
         {props.playing && <div className="playing-badge" style={{ transform: `scale(${1 / Math.max(zoom, 0.25)})` }}>{strings.canvas.playing}</div>}
@@ -453,7 +454,21 @@ function BoardView(props: {
 function Thumb({ file, v }: { file: string; v: number }) {
   const [ok, setOk] = useState(true);
   if (!ok) return null;
-  return <img className="board-thumb" src={`/api/thumb?f=${encodeURIComponent(file)}&v=${v}`} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setOk(false)} onLoad={(e) => e.currentTarget.classList.add("loaded")} />;
+  return (
+    <img
+      className="board-thumb"
+      src={`/api/thumb?f=${encodeURIComponent(file)}&v=${v}`}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      onError={() => setOk(false)}
+      onLoad={(e) => {
+        e.currentTarget.classList.add("loaded");
+        e.currentTarget.parentElement?.classList.remove("loading");
+      }}
+    />
+  );
 }
 
 function LiveFrame(props: { src: string; title: string; reloadKey: number; editing: boolean; iframeRef: (el: HTMLIFrameElement | null) => void }) {

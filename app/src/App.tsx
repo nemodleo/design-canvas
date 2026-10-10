@@ -68,6 +68,7 @@ export function App() {
   const [editFile, setEditFile] = useState<string | null>(null);
   const [playFile, setPlayFile] = useState<string | null>(null);
   const [inlinePlay, setInlinePlay] = useState<string | null>(null);
+  const [firstRunHint, setFirstRunHint] = useState(false);
   const [announce, setAnnounce] = useState("");
   const [focusFile, setFocusFile] = useState<string | null>(null);
   const [leftOpen, setLeftOpen] = useState(true);
@@ -402,7 +403,17 @@ export function App() {
     else if (s.page) setPage(s.page);
     if (launch?.view === "focused" && launch.file && board.boards[launch.file]) setFocusFile(launch.file);
     if (s.view && !launch?.page) setView(s.view);
-    else setView(fitView(Object.values(board.boards), canvasSize));
+    else if (!s.view && board.order.length > 0) {
+      // True first run: land on the first board at a readable size, not on 98 boards at 4%
+      const firstFile = board.order.find((f) => board.boards[f] && onPage(board.boards[f])) ?? board.order[0];
+      const first = board.boards[firstFile];
+      if (first) {
+        const v = fitView([first], canvasSize, 80);
+        setView({ ...v, zoom: Math.min(v.zoom, 1) });
+        setSelected([firstFile]);
+        setFirstRunHint(true);
+      } else setView(fitView(Object.values(board.boards), canvasSize));
+    } else setView(fitView(Object.values(board.boards), canvasSize));
   }, [board, canvasSize]);
   // Remember view state
   useEffect(() => {
@@ -469,6 +480,22 @@ export function App() {
   const zoomTo = (z: number) => zoomBy(z / view.zoom);
 
   /* ---------- Board actions ---------- */
+  useEffect(() => {
+    if (!firstRunHint) return;
+    // Arm the dismiss only after the page has settled, so load-time events don't eat the hint
+    let armed = false;
+    const arm = window.setTimeout(() => (armed = true), 1500);
+    const off = () => armed && setFirstRunHint(false);
+    const t = window.setTimeout(() => setFirstRunHint(false), 15000);
+    window.addEventListener("pointerdown", off, true);
+    window.addEventListener("keydown", off, true);
+    return () => {
+      window.clearTimeout(arm);
+      window.clearTimeout(t);
+      window.removeEventListener("pointerdown", off, true);
+      window.removeEventListener("keydown", off, true);
+    };
+  }, [firstRunHint]);
   const select = (files: string[], m: "replace" | "toggle" | "add" = "replace") => {
     setSelected((cur) => (m === "replace" ? files : m === "add" ? [...new Set([...cur, ...files])] : files.reduce((a, f) => (a.includes(f) ? a.filter((x) => x !== f) : [...a, f]), cur)));
     if (files.length) setSelectedNote(null);
@@ -1365,8 +1392,8 @@ export function App() {
             </button>
           </div>
           <div className="tool-group">
-            <button className={`icon-btn ${rightTab === "chat" ? "on" : ""}`} aria-label={strings.toolbar.aiChat} aria-pressed={rightTab === "chat"} title={strings.toolbar.aiChatTitle(mod)} onClick={() => (rightTab === "chat" ? setRightTab("inspect") : openChat())}>
-              <Icon name="comment" />
+            <button className={`ask-ai ${rightTab === "chat" ? "on" : ""}`} aria-label={strings.toolbar.aiChat} aria-pressed={rightTab === "chat"} title={strings.toolbar.aiChatTitle(mod)} onClick={() => (rightTab === "chat" ? setRightTab("inspect") : openChat())}>
+              <Icon name="comment" size={16} /> <span className="ask-ai-label">{strings.toolbar.askAi}</span>
             </button>
             <button className="icon-btn" aria-label={strings.toolbar.viewMenu} aria-haspopup="menu" title={strings.toolbar.viewMenuTitle} onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); viewMenu({ clientX: r.right, clientY: r.bottom + 4 }); }}>
               <Icon name="more" />
@@ -1502,6 +1529,12 @@ export function App() {
             }}
           />
           {SHAPE_TOOLS.includes(tool) && !editFile && <ShapeDrawer tool={tool as ShapeKind} view={view} onDone={(sh) => addShape(sh)} />}
+          {firstRunHint && visibleBoards.length > 0 && (
+            <div className="first-run" role="status">
+              <div className="first-run-line"><Icon name="edit" size={16} /> {strings.app.firstRunEdit}</div>
+              <div className="first-run-line"><Icon name="comment" size={16} /> {strings.app.firstRunAi(mod)}</div>
+            </div>
+          )}
           {visibleBoards.length === 0 && visibleNotes.length === 0 && visibleShapes.length === 0 && (
             <div className="canvas-empty">
               <Icon name="board" size={32} />
@@ -1541,6 +1574,7 @@ export function App() {
           </div>
           {rightTab === "inspect" && (
         <Inspector
+          onAskAi={() => openChat()}
           author={author || strings.app.defaultAuthor}
           onAuthor={async () => {
             const r = await ask.prompt({ title: strings.dialog.authorTitle, label: strings.dialog.name, value: author, ok: strings.dialog.save });

@@ -3,6 +3,7 @@
 import { Children, useState, type ReactNode } from "react";
 
 import { api } from "./api";
+import { Icon } from "./icons";
 import { describe } from "./editor";
 import type { Selection } from "./types";
 import { strings } from "./strings";
@@ -19,6 +20,8 @@ export function Inspector(props: {
   comments: Comment[];
   onSelectPath: (path: string) => void;
   onAskAI?: (c: Comment) => void;
+  /** Empty state: open the AI tab */
+  onAskAi?: () => void;
   author: string;
   onAuthor: () => void;
   children?: ReactNode;
@@ -68,6 +71,12 @@ export function Inspector(props: {
       {!props.file ? (
         Children.toArray(props.children).length ? props.children : (
           <div className="inspector-empty">
+            <p className="empty-lead">{strings.inspector.emptyLead}</p>
+            {props.onAskAi && (
+              <button className="primary ask-ai-cta" onClick={props.onAskAi}>
+                <Icon name="comment" size={16} /> {strings.inspector.emptyAiCta}
+              </button>
+            )}
             <p className="muted">{strings.inspector.pickBoard}</p>
             <ul className="muted">
               <li><kbd>B</kbd> {strings.inspector.hintDraw} · <kbd>T</kbd> {strings.inspector.hintTitle} · <kbd>N</kbd> {strings.inspector.hintNote}</li>
