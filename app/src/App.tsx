@@ -388,6 +388,7 @@ export function App() {
         else if (e.type === "errors-changed") void loadErrors();
         else if (e.type === "assets-changed") setAssetsVersion((v) => v + 1);
         else if (e.type === "tokens-changed") setTokensVersion((v) => v + 1);
+        else if (e.type === "app-changed") window.location.reload();
         else if (e.type === "chat") for (const fn of chatListeners.current) fn(e.id, e.ev);
       }),
     [load, loadComments, loadHistory, loadErrors],

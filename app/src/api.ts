@@ -34,6 +34,7 @@ export type ServerEvent =
   | { type: "errors-changed" }
   | { type: "assets-changed" }
   | { type: "tokens-changed" }
+  | { type: "app-changed" }
   | { type: "chat"; id: string; ev: import("./chat").ChatEvent };
 
 /** WebSocket that reconnects 1 second after disconnecting */

@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import { createReadStream, existsSync } from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import chokidar from "chokidar";
 import { WebSocketServer } from "ws";
 
 import { TOOL_ROOT } from "./args.mjs";
@@ -195,6 +196,12 @@ export async function createServer({ dir, port, dev = true, extraRoutes = [] }) 
     const data = JSON.stringify(msg);
     for (const c of wss.clients) if (c.readyState === 1) c.send(data);
   };
+  // Working from source: when a new app build lands in dist/, open tabs reload themselves
+  let appWatcher = null;
+  if (dev && existsSync(path.join(TOOL_ROOT, "app"))) {
+    appWatcher = chokidar.watch(path.join(distDir, "index.html"), { ignoreInitial: true, awaitWriteFinish: { stabilityThreshold: 300 } });
+    appWatcher.on("all", () => ctx.broadcast({ type: "app-changed" }));
+  }
 
   await new Promise((resolve, reject) => {
     server.once("error", reject);
@@ -206,6 +213,7 @@ export async function createServer({ dir, port, dev = true, extraRoutes = [] }) 
     server,
     url: `http://localhost:${port}`,
     async close() {
+      await appWatcher?.close();
       for (const c of wss.clients) c.terminate();
       wss.close();
       await new Promise((r) => server.close(r));
