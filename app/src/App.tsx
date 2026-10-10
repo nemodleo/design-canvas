@@ -428,7 +428,7 @@ export function App() {
     if (!board || !restored.current) return;
     const t = window.setTimeout(() => {
       try {
-        localStorage.setItem(stateKey(board.title), JSON.stringify({ view, page: currentPage, left: leftOpen, minimap: minimapOpen } satisfies Saved));
+        localStorage.setItem(stateKey(board.title), JSON.stringify({ view, page: currentPage, left: narrow ? undefined : leftOpen, minimap: minimapOpen } satisfies Saved));
       } catch {
         /* Failing to save does not affect behavior */
       }
